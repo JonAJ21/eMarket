@@ -11,3 +11,6 @@ wheels/
 .venv/
 poetry.lock
 .env
+
+# Postgres volume
+.postgres
