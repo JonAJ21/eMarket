@@ -2,6 +2,7 @@ from uuid import uuid4
 from sqlalchemy import UUID, Column, String, Text
 from sqlalchemy.orm import relationship
 
+from models.user_role import UserRole
 from db.postgres import Base
 
 
@@ -11,6 +12,7 @@ class Role(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
     name = Column(String(255), nullable=False, index=True, unique=True)
     description = Column(Text)
+    
     users = relationship(
         "User",
         secondary=UserRole.__tablename__,

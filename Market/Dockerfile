@@ -1,21 +1,18 @@
-FROM python:3.12.1-slim-bullseye
+FROM python:3.13.2-slim-bullseye AS builder
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+RUN pip install uv
+
+COPY pyproject.toml ./
+
+RUN uv pip install --system -r pyproject.toml
+
+FROM python:3.13.2-slim-bullseye
+
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+COPY /app/* /app/
 
 WORKDIR /app
 
-RUN apt update -y && \
-    apt install -y python3-dev \
-    gcc \
-    musl-dev
-
-ADD pyproject.toml /app
-
-RUN pip install --upgrade pip
-RUN pip install poetry
-
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-root --no-interaction --no-ansi
-
-COPY /app/* /app/
+CMD ["alembic upgrade head"]

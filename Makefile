@@ -25,3 +25,11 @@ market-shell:
 market-logs:
 	${LOGS} ${MARKET_CONTAINER} -f
 
+.PHONY: market-alembic-revision
+market-alembic-revision:
+	${EXEC} ${MARKET_CONTAINER} alembic revision --autogenerate -m "update"
+
+.PHONY: market-alembic-upgrade
+market-alembic-upgrade:
+	${EXEC} ${MARKET_CONTAINER} alembic upgrade head
+

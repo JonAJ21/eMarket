@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 from sqlalchemy import UUID, Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import relationship
-from Market.app.db.postgres import Base
+from db.postgres import Base
 
 
 class UserHistory(Base):
