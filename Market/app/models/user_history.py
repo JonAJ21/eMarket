@@ -13,7 +13,7 @@ class UserHistory(Base):
     user = relationship("User", back_populates="history")
     attempted = Column(DateTime(timezone=True), default=datetime.now(UTC))
     user_agent = Column(String(255))
-    user_device_type = Column(Text, primary_key=True, nullable=False)
+    user_device_type = Column(Text)
     success = Column(Boolean, default=True, nullable=False)
     
     # __table_args__ = (

@@ -14,5 +14,3 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY /app/* /app/
 
 WORKDIR /app
-
-CMD ["alembic upgrade head"]

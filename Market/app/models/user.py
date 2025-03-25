@@ -8,18 +8,18 @@ from sqlalchemy import UUID, Column, DateTime, String
 from sqlalchemy.orm import Mapped, relationship
 
 from models.user_history import UserHistory
-from models.social_accounts import SocialAccount
-from models.roles import Role
+from models.social_account import SocialAccount
+from models.role import Role
 from models.user_role import UserRole
 from db.postgres import Base
 
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     login = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=True)
+    email = Column(String(255))
     
     roles: Mapped[List['Role']] = relationship(
         'Role',

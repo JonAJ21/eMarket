@@ -17,6 +17,6 @@ class UserRole(Base):
         nullable=False
     )
     
-    __table_args__ = (
-        UniqueConstraint("user_id", "role_id", name="user_role_unique"),
-    )
+    # __table_args__ = (
+    #     UniqueConstraint("user_id", "role_id", name="unique_user_role"),
+    # )

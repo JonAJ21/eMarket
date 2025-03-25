@@ -9,10 +9,10 @@ from alembic import context
 
 from db.postgres import Base
 from models.user_history import UserHistory
-from models.users import User
-from models.roles import Role
+from models.user import User
+from models.role import Role
 from models.user_role import UserRole
-from models.social_accounts import SocialAccount
+from models.social_account import SocialAccount
 from core.config import settings
 
 
