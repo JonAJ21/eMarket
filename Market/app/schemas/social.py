@@ -3,7 +3,7 @@ from enum import Enum
 from pydantic import BaseModel, EmailStr
 
 class SocialNetworks(Enum):
-    VK = 'vk'
+    GOOGLE = 'google'
     YANDEX = 'yandex'
     
 class SocialUser(BaseModel):

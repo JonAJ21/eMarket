@@ -4,6 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from services.cache import BaseCacheService
 from schemas.result import CreateSchemaType, ModelType
 from repositories.base import BaseRepository
 
@@ -30,3 +31,32 @@ class PostgreRepository(BaseRepository, Generic[ModelType, CreateSchemaType]):
     async def delete(self, *, id: Any) -> None:
         statement = delete(self._model).where(self._model.id == id)
         await self._session.execute(statement)
+        
+        
+class CachedPostgreRepository(
+    PostgreRepository[ModelType, CreateSchemaType],
+    Generic[ModelType, CreateSchemaType]
+):
+    def __init__(
+        self, session: AsyncSession,
+        model: Type[ModelType], cache_service: BaseCacheService
+    ):
+        self._session = session
+        self._model = model
+        self._cache_service = cache_service
+        
+    async def get(self, *, id: Any) -> ModelType | None:
+        key = f"{self._model.__name__}_{id}"
+        document = await self._cache_service.get(key=key)
+        if not document:
+            document = await super().get(id=id)
+        return document
+    
+    async def gets(self, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
+        return await super().gets(skip=skip, limit=limit)
+    
+    async def insert(self, *, body: CreateSchemaType) -> ModelType:
+        return await super().insert(body=body)
+    
+    async def delete(self, *, id: Any) -> None:
+        await super().delete(id=id)

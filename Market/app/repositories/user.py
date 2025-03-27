@@ -1,11 +1,12 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, List
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import selectinload, noload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from repositories.postgre import PostgreRepository
+from services.cache import BaseCacheService
+from repositories.postgre import CachedPostgreRepository, PostgreRepository
 from schemas.user import UserCreateDTO, UserHistoryCreateDTO
 from schemas.result import Error, GenericResult, ModelType
 from repositories.base import BaseRepository
@@ -14,7 +15,7 @@ from models.social_account import SocialAccount
 from models.user import User
 from models.user_history import UserHistory
 
-class BaseUserRepository(BaseRepository):
+class BaseUserRepository(BaseRepository, ABC):
     @abstractmethod
     async def get_by_login(self, *, login: str) -> User | None:
         ...
@@ -110,5 +111,50 @@ class UserPostgreRepository(PostgreRepository[User, UserCreateDTO], BaseUserRepo
         user.add_social_account(social)
         return GenericResult.success(social)
     
+
+class CachedUserPostgreRepository(
+    CachedPostgreRepository[ModelType, UserCreateDTO],
+    BaseUserRepository
+):
+    def __init__(
+        self, session: AsyncSession,  cache_service: BaseCacheService
+    ):
+        self._session = session
+        self._model = User
+        self._cache_service = cache_service
         
+    async def get_by_login(self, *, login: str) -> User | None:
+        key = f"{self._model.__name__}_{login}"
+        if self._cache_service is not None:
+            entity = await self._cache_service.get(key=key)
+        if not entity:
+            entity = await super().get_by_login(login=login)
+        return entity
     
+    async def get_user_history(
+        self, *, user_id: Any, skip: int = 0, limit: int = 100
+    ) -> List[UserHistory]:
+        return await super().get_user_history(
+            user_id=user_id, skip=skip, limit=limit
+        )
+        
+    async def get_user_social(
+        self, *, social_id: str, social_name: SocialNetworks
+    ) -> SocialAccount | None:
+        return await super().get_user_social(
+            social_id=social_id, social_name=social_name
+        )
+        
+    async def insert_user_login(
+        self, *, user_id: Any, data: UserHistoryCreateDTO
+    ) -> GenericResult[UserHistory]:
+        return await super().insert_user_login(
+            user_id=user_id, data=data
+        )
+        
+    async def insert_user_social(
+        self, *, user_id: Any, data: SocialCreateDTO
+    ) -> GenericResult[SocialAccount]:
+        return await super().insert_user_social(
+            user_id=user_id, data=data
+        )
