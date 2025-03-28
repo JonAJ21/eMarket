@@ -35,20 +35,23 @@ class BaseUserRepository(BaseRepository, ABC):
     @abstractmethod
     async def insert_user_login(
         self, *, data: UserHistoryCreateDTO
-    ) -> GenericResult[UserHistory]:
+    ) -> UserHistory | None:
         ...
         
     @abstractmethod
     async def insert_user_social(
         self, *, data: SocialCreateDTO
-    ) -> GenericResult[SocialAccount]:
+    ) -> SocialAccount | None:
         ...
         
-class UserPostgreRepository(PostgreRepository[User, UserCreateDTO], BaseUserRepository):
+class UserPostgreRepository(
+    PostgreRepository[User, UserCreateDTO],
+    BaseUserRepository
+):
     def __init__(self, session: AsyncSession):
         super().__init__(session=session, model=User)
         
-    async def get(self, *, id: Any) -> ModelType | None:
+    async def get(self, *, id: Any) -> User | None:
         statement = (
             select(self._model)
             .options(noload(self._model.history))
@@ -88,32 +91,28 @@ class UserPostgreRepository(PostgreRepository[User, UserCreateDTO], BaseUserRepo
         return (await self._session.execute(statement)).scalar_one_or_none()
     
     async def insert_user_login(
-        self, *, user_id: Any, data: UserHistoryCreateDTO
-    ) -> GenericResult[UserHistory]:
-        user: User = await self.get(id=user_id)
+        self, *, data: UserHistoryCreateDTO
+    ) -> UserHistory | None:
+        user: User = await self.get(id=data.user_id)
         if not user:
-            return GenericResult.failure(
-                error=Error(error_code="USER_NOT_FOUND", reason="User not found"),
-            )
+            return None
         user_history = UserHistory(**data.model_dump())
         user.add_user_session(user_history)
-        return GenericResult.success(user_history)
+        return user_history
     
     async def insert_user_social(
-        self, *, user_id: Any, data: SocialCreateDTO
-    ) -> GenericResult[SocialAccount]:
-        user: User = await self.get(id=user_id)
+        self, *, data: SocialCreateDTO
+    ) -> SocialAccount | None:
+        user: User = await self.get(id=data.user_id)
         if not user:
-            return GenericResult.failure(
-                error=Error(error_code="USER_NOT_FOUND", reason="User not found"),
-            )
+            return None
         social = SocialAccount(**data.model_dump())
         user.add_social_account(social)
-        return GenericResult.success(social)
+        return social
     
 
 class CachedUserPostgreRepository(
-    CachedPostgreRepository[ModelType, UserCreateDTO],
+    CachedPostgreRepository[User, UserCreateDTO],
     BaseUserRepository
 ):
     def __init__(
@@ -146,15 +145,11 @@ class CachedUserPostgreRepository(
         )
         
     async def insert_user_login(
-        self, *, user_id: Any, data: UserHistoryCreateDTO
-    ) -> GenericResult[UserHistory]:
-        return await super().insert_user_login(
-            user_id=user_id, data=data
-        )
+        self, *, data: UserHistoryCreateDTO
+    ) -> UserHistory | None:
+        return await super().insert_user_login(data=data)
         
     async def insert_user_social(
-        self, *, user_id: Any, data: SocialCreateDTO
-    ) -> GenericResult[SocialAccount]:
-        return await super().insert_user_social(
-            user_id=user_id, data=data
-        )
+        self, *, data: SocialCreateDTO
+    ) -> SocialAccount | None:
+        return await super().insert_user_social(data=data)
