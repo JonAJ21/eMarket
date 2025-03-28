@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.cache import BaseCacheService
 from repositories.postgre import CachedPostgreRepository, PostgreRepository
 from schemas.user import UserCreateDTO, UserHistoryCreateDTO
-from schemas.result import Error, GenericResult, ModelType
 from repositories.base import BaseRepository
 from schemas.social import SocialCreateDTO, SocialNetworks
 from models.social_account import SocialAccount
@@ -113,7 +112,7 @@ class UserPostgreRepository(
 
 class CachedUserPostgreRepository(
     CachedPostgreRepository[User, UserCreateDTO],
-    BaseUserRepository
+    UserPostgreRepository
 ):
     def __init__(
         self, session: AsyncSession,  cache_service: BaseCacheService
