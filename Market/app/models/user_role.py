@@ -1,4 +1,4 @@
-from sqlalchemy import UUID, Column, ForeignKey, UniqueConstraint
+from sqlalchemy import UUID, Column, ForeignKey
 from db.postgres import Base
 
 

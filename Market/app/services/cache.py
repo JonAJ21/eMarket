@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import Type
 
 from redis.asyncio import Redis
-from redis.asyncio.client import Pipeline
 
 from schemas.result import ModelType
 

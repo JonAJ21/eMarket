@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Market.app.services.cache import BaseCacheService
+from services.cache import BaseCacheService
 from schemas.role import RoleCreateDTO
 from repositories.postgre import CachedPostgreRepository, PostgreRepository
 from models.role import Role
@@ -25,7 +25,6 @@ class RolePostgreRepository(PostgreRepository[Role, RoleCreateDTO], BaseRoleRepo
         return results.scalar_one_or_none()
     
 
- 
 class CachedRolePostgreRepository(
     CachedPostgreRepository[Role, RoleCreateDTO],
     RolePostgreRepository

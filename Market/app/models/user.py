@@ -67,12 +67,12 @@ class User(Base):
         if not self.check_password(old_password):
             return False
         self.password = hashpw(new_password.encode(), gensalt()).decode()
+        return True
     
     def update_personal(
         self,
         login: str | None = None,
         email: EmailStr | None = None,
-        tg_id: str | None = None,
     ) -> Self:
         if login != "" and login is not None:
             self.login = login
@@ -109,7 +109,7 @@ class User(Base):
     
     def has_social_account(self, social_account: SocialAccount) -> bool:
         for account in self.social_accounts:
-            if account.social_id == social_account.social_id and account.social_network == social_account.social_network:
+            if account.social_id == social_account.social_id and account.social_name == social_account.social_name:
                 return True
         return False
     

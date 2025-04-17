@@ -116,10 +116,8 @@ class CachedUserPostgreRepository(
 ):
     def __init__(
         self, session: AsyncSession,  cache_service: BaseCacheService
-    ):
-        self._session = session
-        self._model = User
-        self._cache_service = cache_service
+    ):  
+        super().__init__(session=session, model=User, cache_service=cache_service)
         
     async def get_by_login(self, *, login: str) -> User | None:
         key = f"{self._model.__name__}_{login}"

@@ -30,7 +30,7 @@ class BaseRoleService(ABC):
         ...
         
 
-class RoleSerivice(BaseRoleService):
+class RoleService(BaseRoleService):
     def __init__(self, repository: BaseRoleRepository, uow: BaseUnitOfWork):
         self._repository = repository
         self._uow = uow

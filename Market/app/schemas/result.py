@@ -37,5 +37,5 @@ class GenericResult(Result, Generic[ModelType]):
         return GenericResult(is_success=True, error=None, response=value)
     
     @staticmethod
-    def failure(err: Error) -> "GenericResult":
-        return GenericResult(is_success=False, error=err, response=None)
+    def failure(error: Error) -> "GenericResult":
+        return GenericResult(is_success=False, error=error, response=None)

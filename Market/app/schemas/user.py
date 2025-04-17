@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from pydantic import BaseModel, EmailStr
 
@@ -12,7 +12,7 @@ class UserHistoryCreateDTO(BaseModel):
     user_agent: str
     user_device_type: str
     success: bool
-    attempted: datetime = datetime.now()
+    attempted: datetime = datetime.now(UTC)
     
 class UserUpdatePasswordDTO(BaseModel):
     user_id: str
