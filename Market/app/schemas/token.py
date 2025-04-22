@@ -9,12 +9,12 @@ class TokenData(BaseModel):
     exp: datetime | None = None
 
 class Token(BaseModel):
-    access_token: str
-    refresh_token: str
+    access_token: str | None
+    refresh_token: str | None
     
 class TokenJTI(BaseModel):
-    access_token_jti: str
-    refresh_token_jti: str
+    access_token_jti: str | None
+    refresh_token_jti: str | None
     
 class TokenValidation(BaseModel):
     access_token: str

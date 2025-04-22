@@ -10,10 +10,6 @@ class BaseTokenStorage(ABC):
     @abstractmethod
     async def store_token(self, *args, **kwargs):
         ...
-        
-    @abstractmethod
-    async def remove_token(self, *args, **kwargs):
-        ...
     
     @abstractmethod
     async def get_token(self, *args, **kwargs):
@@ -33,13 +29,17 @@ class RedisTokenStorage(BaseTokenStorage):
             if token_jti.refresh_token_jti:
                 await pipeline.setex(
                     name=token_jti.refresh_token_jti,
-                    time=settings.refresh_token_expire_minutes,
+                    time=settings.authjwt_refresh_token_expires,
                     value=str(True)
                 )
+            if token_jti.access_token_jti:
+                await pipeline.setex(
+                    name=token_jti.access_token_jti,
+                    time=settings.authjwt_access_token_expires,
+                    value=str(True)
+                )
+            
         await self._client.transaction(_store_token)
-        
-    async def remove_token(self, *, jti: str) -> None:
-        await self._client.delete(jti)
   
     async def get_token(self, *, key: str) -> str | None:
         return await self._client.get(key)

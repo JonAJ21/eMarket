@@ -13,4 +13,4 @@ from storages.token import BaseTokenStorage
 @add_factory_to_mapper(BaseTokenStorage)
 @cache
 def create_token_storage(redis_client: Redis = Depends(get_redis)) -> BaseTokenStorage:
-    return RedisTokenStorage(_client=redis_client)
+    return RedisTokenStorage(client=redis_client)

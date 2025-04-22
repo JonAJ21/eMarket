@@ -4,7 +4,7 @@ services:
     build:
       context: ./Market
       dockerfile: Dockerfile
-    command: "uvicorn --factory api.v1.main:create_app --host=0.0.0.0 --reload --port 8000"
+    command: "uvicorn --factory main:create_app --host=0.0.0.0 --reload --port 8000"
     volumes:
       - ./Market/app:/app
     ports:

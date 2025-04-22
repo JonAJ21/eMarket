@@ -55,8 +55,8 @@ class CachedPostgreRepository(
     async def gets(self, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
         return await super().gets(skip=skip, limit=limit)
     
-    async def insert(self, *, body: CreateSchemaType) -> ModelType:
-        return await super().insert(body=body)
+    async def insert(self, *, data: CreateSchemaType) -> ModelType:
+        return await super().insert(data=data)
     
     async def delete(self, *, id: Any) -> None:
         await super().delete(id=id)

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from time import time
 from typing import Any
 
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import JWTDecodeError, MissingTokenError
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, Response, status
 
 from models.user import User
 from schemas.user import UserHistoryCreateDTO
@@ -24,11 +25,11 @@ class BaseAuthService(ABC):
         ...
         
     @abstractmethod
-    async def logout(self) -> Result:
+    async def logout(self) -> None:
         ...
         
     @abstractmethod
-    async def refresh(self, access_jti: str | None) -> GenericResult[Token]: 
+    async def refresh(self) -> GenericResult[Token]: 
         ...
         
     @abstractmethod
@@ -51,18 +52,18 @@ class BaseAuthService(ABC):
 class JWTAuthService(BaseAuthService):
     def __init__(
         self,
-        auth_jwt_serice: AuthJWT,
+        auth_jwt_service: AuthJWT,
         token_storage: BaseTokenStorage,
         user_service: BaseUserService
     ):
-        self._auth_jwt_service = auth_jwt_serice
+        self._auth_jwt_service = auth_jwt_service
         self._token_storage = token_storage
         self._user_service = user_service
         
     async def _generate_token(self, user_id: Any):
         return Token(
-            access_token=self._auth_jwt_service.create_access_token(user_id=user_id),
-            refresh_token=self._auth_jwt_service.create_refresh_token(user_id=user_id)
+            access_token=await self._auth_jwt_service.create_access_token(subject=str(user_id)),
+            refresh_token=await self._auth_jwt_service.create_refresh_token(subject=str(user_id))
         )
     
     async def _get_jti(self):
@@ -92,7 +93,7 @@ class JWTAuthService(BaseAuthService):
             
     async def login(self, *, dto: UserLoginDTO) -> GenericResult[Token]:
         user: User = (await self._user_service.get_user_by_login(login=dto.login)).response
-        if not user or not user.check_password(dto.assword):
+        if not user or not user.check_password(dto.password):
             return GenericResult.failure(
                 error=Error(
                     message="Wrong password or login"
@@ -103,6 +104,7 @@ class JWTAuthService(BaseAuthService):
             user_agent=dto.user_agent,
             user_device_type="web",
             success=True,
+            attempted=datetime.now(UTC)
         )
         
         await self._user_service.insert_user_login(dto=user_history)
@@ -126,6 +128,7 @@ class JWTAuthService(BaseAuthService):
             user_agent="oauth2",
             user_device_type="web",
             success=True,
+            attempted=datetime.now(UTC)
         )
         
         await self._user_service.insert_user_login(dto=user_history)
@@ -136,19 +139,19 @@ class JWTAuthService(BaseAuthService):
         
         return GenericResult.success(tokens)
     
-    async def logout(self) -> Result:
+    async def logout(self) -> None:
         await self.require_auth()
         access_jti = (await self._auth_jwt_service.get_raw_jwt())["jti"]
         await self._auth_jwt_service.unset_jwt_cookies()
         token_jti = TokenJTI(access_token_jti=access_jti, refresh_token_jti=None)
-        return await self._token_storage.store_token(token=token_jti)
+        return await self._token_storage.store_token(token_jti=token_jti)
         
         
-    async def refresh(self, access_jti: str | None) -> GenericResult[Token]:
+    async def refresh(self) -> GenericResult[Token]:
         await self._refresh_token_required()
         refresh_jti = await self._get_jti()
         token_jti = TokenJTI(
-            access_token_jti=access_jti,
+            access_token_jti=None,
             refresh_token_jti=refresh_jti
         )
         await self._token_storage.store_token(token_jti=token_jti)
@@ -157,6 +160,7 @@ class JWTAuthService(BaseAuthService):
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
         return GenericResult.success(tokens)
+        
         
     async def require_auth(self) -> None:
         try:
