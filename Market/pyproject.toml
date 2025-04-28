@@ -4,4 +4,28 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "alembic>=1.15.1",
+    "async-fastapi-jwt-auth>=0.6.6",
+    "asyncpg>=0.30.0",
+    "bcrypt>=4.3.0",
+    "faker>=37.0.2",
+    "fastapi>=0.115.11",
+    "pydantic-settings>=2.8.1",
+    "pydantic[email]>=2.10.6",
+    "redis>=5.2.1",
+    "sqlalchemy>=2.0.39",
+    "typer>=0.15.2",
+    "uvicorn>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.26.0",
+    "pytest-mock>=3.14.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
