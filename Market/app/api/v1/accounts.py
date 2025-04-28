@@ -25,9 +25,9 @@ router = APIRouter(
 )
 async def register(
     user_dto: UserCreateDTO,
-    user_serice: BaseUserService = Depends()
+    user_service: BaseUserService = Depends()
 ) -> User:
-    result: GenericResult[User] = await user_serice.create_user(dto=user_dto)
+    result: GenericResult[User] = await user_service.create_user(dto=user_dto)
     if result.is_success:
         return result.response
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.error.message)
@@ -54,7 +54,6 @@ async def login(
         )
 
     return token.response
-
 
 @router.post(
     "/refresh",

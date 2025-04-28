@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import UTC, datetime
+from functools import wraps
 from time import time
 from typing import Any
 
@@ -198,5 +199,26 @@ class JWTAuthService(BaseAuthService):
             )
         user_id = decoded["sub"]
         return await self._user_service.get_user(user_id=user_id)
+    
+def require_roles(roles: list[str]):
+    def auth_decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            auth_service = kwargs["auth_service"]
+            current_user: User = (await auth_service.get_user()).response
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+                )
+            for role in current_user.roles:
+                if role.name in roles:
+                    return await func(*args, **kwargs)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="User have not access"
+            )
+
+        return wrapper
+
+    return auth_decorator 
         
     

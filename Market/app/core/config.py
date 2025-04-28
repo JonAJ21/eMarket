@@ -56,7 +56,6 @@ class Settings(BaseSettings):
     authjwt_cookie_same_site: str = "lax" 
     
     
-    
     super_user_login: str = Field(
         "superuser",
         alias="SUPER_USER_LOGIN",

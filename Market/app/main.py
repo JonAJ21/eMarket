@@ -8,6 +8,7 @@ from dependencies.main import setup_dependencies
 from db import redis
 from core.config import settings
 from api.v1.accounts import router as accounts_router
+from api.v1.users import router as users_router
 
 
 @asynccontextmanager
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
     )
     
     app.include_router(accounts_router, prefix="/accounts")
+    app.include_router(users_router, prefix="/users")
     
     
     setup_dependencies(app)
