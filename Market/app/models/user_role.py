@@ -22,6 +22,9 @@ class UserRole(Base):
         primary_key=True
     )
     
-    assigned_at: Mapped[datetime] = mapped_column(
-        DateTime, server_default=func.now(), nullable=False
-    )
+    def __init__(self, user_id: UUID, role_id: UUID):
+        self.user_id = user_id
+        self.role_id = role_id
+    
+    def __repr__(self):
+        return f'<UserRole(user_id={self.user_id}, role_id={self.role_id})>'

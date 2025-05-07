@@ -37,3 +37,11 @@ class SocialAccount(Base):
     )
     
     user: Mapped['User'] = relationship(back_populates='social_accounts')
+    
+    def __init__(self, user_id: UUID, social_id: UUID, social_name: SocialProvider):
+        self.user_id = user_id
+        self.social_id = social_id
+        self.social_name = social_name
+        
+    def __repr__(self):
+        return f'<SocialAccount(id={self.id}, user_id={self.user_id}, social_name={self.social_name})>'

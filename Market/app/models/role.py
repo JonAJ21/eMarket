@@ -30,3 +30,24 @@ class Role(Base):
     users: Mapped[list['User']] = relationship(
         secondary='user_role', back_populates='roles'
     )
+    
+    def __init__(
+        self,
+        name: str,
+        description: str | None = None
+    ):
+        self.name = name
+        self.description = description
+        
+    def __repr__(self):
+        return f'<Role(id={self.id}, name={self.name})>'
+    
+    def update_role(
+        self,
+        name: str,
+        description: str | None = None
+    ):
+        if name:
+            self.name = name
+        if description:
+            self.description = description

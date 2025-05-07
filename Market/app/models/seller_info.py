@@ -37,3 +37,22 @@ class SellerInfo(Base):
     )
      
     user: Mapped['User'] = relationship(back_populates='seller_info')
+    
+    def __init__(self, user_id: UUID, name: str, address: str, inn: str,
+                 payment_account: str, correspondent_account: str,
+                 bank: str, bik: str, postal_code: str | None = None,
+                 kpp: str | None = None):
+        self.user_id = user_id
+        self.name = name
+        self.address = address
+        self.postal_code = postal_code
+        self.inn = inn
+        self.kpp = kpp
+        self.payment_account = payment_account
+        self.correspondent_account = correspondent_account
+        self.bank = bank
+        self.bik = bik
+    
+    def __repr__(self):
+        return f'<SellerInfo(user_id={self.user_id}, name={self.name})>'
+    

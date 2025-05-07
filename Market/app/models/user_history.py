@@ -34,3 +34,19 @@ class UserHistory(Base):
     )
     
     user: Mapped['User'] = relationship(back_populates='user_history')
+    
+    def __init__(
+        self,
+        user_id: UUID,
+        user_agent: str | None = None,
+        user_device_type: UserDeviceType | None = None,
+        is_success: bool = False
+    ):
+        self.user_id = user_id
+        self.user_agent = user_agent
+        self.user_device_type = user_device_type
+        self.is_success = is_success
+    
+    def __repr__(self):
+        return f'<UserHistory(id={self.id}, user_id={self.user_id})>'
+        
