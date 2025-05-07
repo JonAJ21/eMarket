@@ -9,7 +9,7 @@ from services.cache import BaseCacheService
 from repositories.postgre import CachedPostgreRepository, PostgreRepository
 from schemas.user import UserCreateDTO, UserHistoryCreateDTO
 from repositories.base import BaseRepository
-from schemas.social import SocialCreateDTO, SocialNetworks
+from schemas.social import SocialCreateDTO, SocialProvider
 from models.social_account import SocialAccount
 from models.user import User
 from models.user_history import UserHistory
@@ -27,7 +27,7 @@ class BaseUserRepository(BaseRepository, ABC):
         
     @abstractmethod
     async def get_user_social(
-        self, *, social_id: str, social_name: SocialNetworks
+        self, *, social_id: str, social_name: SocialProvider
     ) -> SocialAccount:
         ...
         
@@ -76,7 +76,7 @@ class UserPostgreRepository(
         return (await self._session.execute(statement)).scalars().all()
     
     async def get_user_social(
-        self, *, social_id: str, social_name: SocialNetworks
+        self, *, social_id: str, social_name: SocialProvider
     ) -> SocialAccount | None:
         statement = (
             select(SocialAccount)
@@ -135,7 +135,7 @@ class CachedUserPostgreRepository(
         )
         
     async def get_user_social(
-        self, *, social_id: str, social_name: SocialNetworks
+        self, *, social_id: str, social_name: SocialProvider
     ) -> SocialAccount | None:
         return await super().get_user_social(
             social_id=social_id, social_name=social_name
