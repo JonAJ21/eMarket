@@ -1,4 +1,5 @@
 from enum import Enum
+from datetime import datetime
 
 from pydantic import BaseModel, EmailStr
 
@@ -6,7 +7,7 @@ class SocialProvider(str, Enum):
     GOOGLE = 'google'
     YANDEX = 'yandex'
     
-class SocialUser(BaseModel):
+class SocialUserDTO(BaseModel):
     id: str
     login: str
     social_name: SocialProvider
@@ -16,3 +17,4 @@ class SocialCreateDTO(BaseModel):
     user_id: str
     social_id: str
     social_name: SocialProvider
+    created_at: datetime

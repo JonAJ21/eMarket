@@ -1,8 +1,8 @@
 """update
 
-Revision ID: 5f4aebf23369
+Revision ID: f354bb94700f
 Revises: 
-Create Date: 2025-05-07 18:16:20.117957
+Create Date: 2025-05-08 06:21:07.401303
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '5f4aebf23369'
+revision: str = 'f354bb94700f'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -53,9 +53,9 @@ def upgrade() -> None:
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('address', sa.Text(), nullable=False),
-    sa.Column('postal_code', sa.String(length=20), nullable=True),
+    sa.Column('postal_code', sa.String(length=20), nullable=False),
     sa.Column('inn', sa.String(length=12), nullable=False),
-    sa.Column('kpp', sa.String(length=9), nullable=True),
+    sa.Column('kpp', sa.String(length=9), nullable=False),
     sa.Column('payment_account', sa.String(length=20), nullable=False),
     sa.Column('correspondent_account', sa.String(length=20), nullable=False),
     sa.Column('bank', sa.String(length=100), nullable=False),
@@ -93,7 +93,6 @@ def upgrade() -> None:
     op.create_table('user_role',
     sa.Column('user_id', sa.UUID(), nullable=False),
     sa.Column('role_id', sa.UUID(), nullable=False),
-    sa.Column('assigned_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id', 'role_id'),

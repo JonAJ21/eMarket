@@ -11,26 +11,28 @@ class UserDeviceType(str, Enum):
 class UserBase(BaseModel):
     id: UUID
     login: str
-    email: EmailStr | None
 
 class UserCreateDTO(BaseModel):
     login: str
     password: str
-    email: EmailStr | None = None
     
 class UserHistoryCreateDTO(BaseModel):
     user_id: UUID
     user_agent: str
-    user_device_type: str
-    success: bool
-    attempted: datetime
+    user_device_type: UserDeviceType
+    attempted_at: datetime
+    is_success: bool
     
 class UserUpdatePasswordDTO(BaseModel):
     user_id: UUID
     old_password: str
     new_password: str
     
-class UserUpdateEmailDTO(BaseModel):
-    user_id: UUID
-    email: EmailStr | None
+
+class UserUpdatePersonalDTO(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    fathers_name: str | None = None
+    phone: str | None = None
+    email: EmailStr | None = None
     

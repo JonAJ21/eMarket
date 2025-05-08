@@ -5,6 +5,8 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import selectinload, noload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models.seller_info import SellerInfo
+from schemas.seller import SellerCreateDTO
 from services.cache import BaseCacheService
 from repositories.postgre import CachedPostgreRepository, PostgreRepository
 from schemas.user import UserCreateDTO, UserHistoryCreateDTO
@@ -28,19 +30,31 @@ class BaseUserRepository(BaseRepository, ABC):
     @abstractmethod
     async def get_user_social(
         self, *, social_id: str, social_name: SocialProvider
-    ) -> SocialAccount:
+    ) -> SocialAccount | None:
         ...
-        
+    
+    @abstractmethod
+    async def get_seller_info(
+        self, *, user_id: str
+    ) -> SellerInfo | None:
+        ...
+    
     @abstractmethod
     async def insert_user_login(
-        self, *, data: UserHistoryCreateDTO
+        self, *, dto: UserHistoryCreateDTO
     ) -> UserHistory | None:
         ...
         
     @abstractmethod
     async def insert_user_social(
-        self, *, data: SocialCreateDTO
+        self, *, dto: SocialCreateDTO
     ) -> SocialAccount | None:
+        ...
+        
+    @abstractmethod
+    async def insert_seller_info(
+        self, *, dto: SellerCreateDTO,  
+    ) -> SellerInfo:
         ...
         
 class UserPostgreRepository(
@@ -82,10 +96,19 @@ class UserPostgreRepository(
             select(SocialAccount)
             .where(
                 and_(
-                    SocialAccount.social_name == social_name,
-                    SocialAccount.social_id == social_id
+                    SocialAccount.social_id == social_id,
+                    SocialAccount.social_name == social_name
                 )
             )
+        )
+        return (await self._session.execute(statement)).scalar_one_or_none()
+    
+    async def get_seller_info(
+        self, *, user_id: str
+    ) -> SellerInfo | None:
+        statement = (
+            select(SellerInfo)
+            .where(SellerInfo.user_id == user_id)
         )
         return (await self._session.execute(statement)).scalar_one_or_none()
     
@@ -109,7 +132,16 @@ class UserPostgreRepository(
         user.add_social_account(social)
         return social
     
-
+    async def insert_seller_info(
+        self, *, dto: SellerCreateDTO
+    ) -> SellerInfo | None:
+        user: User = await self.get(id=dto.user_id)
+        if not user:
+            return None
+        seller_info = SellerInfo(**dto.model_dump())
+        user.add_seller_info(seller_info)
+        return seller_info
+    
 class CachedUserPostgreRepository(
     CachedPostgreRepository[User, UserCreateDTO],
     UserPostgreRepository
@@ -140,7 +172,12 @@ class CachedUserPostgreRepository(
         return await super().get_user_social(
             social_id=social_id, social_name=social_name
         )
-        
+    
+    async def get_seller_info(
+        self, *, user_id: str
+    ) -> SellerInfo | None:
+        return await super().get_seller_info(user_id=user_id)
+    
     async def insert_user_login(
         self, *, data: UserHistoryCreateDTO
     ) -> UserHistory | None:
@@ -150,3 +187,8 @@ class CachedUserPostgreRepository(
         self, *, data: SocialCreateDTO
     ) -> SocialAccount | None:
         return await super().insert_user_social(data=data)
+    
+    async def insert_seller_info(
+        self, *, dto: SellerCreateDTO
+    ) -> SellerInfo | None:
+        return await super().insert_seller_info(dto=dto)

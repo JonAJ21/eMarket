@@ -10,23 +10,23 @@ from schemas.role import RoleCreateDTO, RoleUpdateDTO
 
 class BaseRoleService(ABC):
     @abstractmethod
-    async def get_roles(self, *, skip: int = 0, limit: int = 100) -> GenericResult[list[Role]]:
+    async def get_roles(self, *, skip: int = 0, limit: int = 100) -> list[Role]:
         ...
         
     @abstractmethod
-    async def get_role(self, *, role_id: Any) -> GenericResult[Role]:
+    async def get_role(self, *, role_id: Any) -> Role:
         ...
         
     @abstractmethod
-    async def create_role(self, dto: RoleCreateDTO ) -> GenericResult[Role]:
+    async def create_role(self, *, dto: RoleCreateDTO ) -> Role:
         ...
         
     @abstractmethod
-    async def update_role(self, role_id: Any, dto: RoleCreateDTO) -> GenericResult[Role]:
+    async def update_role(self, *, dto: RoleUpdateDTO) -> Role:
         ...
     
     @abstractmethod
-    async def delete_role(self, role_id: Any) -> Result:
+    async def delete_role(self, *, role_id: Any) -> None:
         ...
         
 
@@ -35,53 +35,36 @@ class RoleService(BaseRoleService):
         self._repository = repository
         self._uow = uow
         
-    async def get_roles(self, *, skip: int = 0, limit: int = 100) -> GenericResult[list[Role]]:
+    async def get_roles(self, *, skip: int = 0, limit: int = 100) -> list[Role]:
         roles = await self._repository.gets(skip=skip, limit=limit)
-        return GenericResult.success(value=roles)
+        return roles
     
-    async def get_role(self, *, role_id: Any) -> GenericResult[Role]:
-        role = await self._repository.get(role_id=role_id)
+    async def get_role(self, *, role_id: Any) -> Role:
+        role = await self._repository.get(id=role_id)
         if not role:
-            return GenericResult.failure(
-                error=Error(
-                    message='Role not found', code='role_not_found',
-                )
-            )
-        return GenericResult.success(value=role)
+            raise RuntimeError('Role not found')
+        return role
     
-    async def create_role(self, dto: RoleCreateDTO) -> GenericResult[Role]:
+    async def create_role(self, dto: RoleCreateDTO) -> Role:
         role = await self._repository.get_role_by_name(name=dto.name)
-        if not role:
-            role = await self._repository.insert(data=dto)
-            await self._uow.commit()
-            return GenericResult.success(value=role)
-        return GenericResult.failure(
-            error=Error(
-                message='Role already exists', code='role_already_exists',
-            )
-        )
+        if role:
+            RuntimeError('Role already exists')
+        role = await self._repository.insert(data=dto)
+        await self._uow.commit()
+        return role
         
-    async def update_role(self, dto: RoleUpdateDTO) -> GenericResult[Role]:
-        role = await self._repository.get(role_id=dto.role_id)
+    async def update_role(self, dto: RoleUpdateDTO) -> Role:
+        role: Role = await self._repository.get(id=dto.role_id)
         if not role:
-            return GenericResult.failure(
-                error=Error(
-                    message='Role not found', code='role_not_found',
-                )
-            )
+            raise RuntimeError('Role not found')
         role.update_role(**dto.model_dump())
         await self._uow.commit()
-        return GenericResult.success(value=role)
+        return role
     
-    async def delete_role(self, role_id: Any) -> Result:
-        role = await self._repository.get(role_id=role_id)
+    async def delete_role(self, role_id: Any) -> None:
+        role = await self._repository.get(id=role_id)
         if not role:
-            return Result.failure(
-                error=Error(
-                    message='Role not found', code='role_not_found',
-                )
-            )
-        await self._repository.delete(role_id=role_id)
+            raise RuntimeError('Role not found')
+        await self._repository.delete(id=role_id)
         await self._uow.commit()
-        return Result.success()
         

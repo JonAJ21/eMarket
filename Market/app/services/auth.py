@@ -9,7 +9,7 @@ from async_fastapi_jwt_auth.exceptions import JWTDecodeError, MissingTokenError
 from fastapi import Depends, HTTPException, Response, status
 
 from models.user import User
-from schemas.user import UserHistoryCreateDTO
+from schemas.user import UserDeviceType, UserHistoryCreateDTO
 from services.user import BaseUserService
 from storages.token import BaseTokenStorage
 from schemas.auth import UserLoginDTO
@@ -18,11 +18,11 @@ from schemas.token import Token, TokenJTI
 
 class BaseAuthService(ABC):
     @abstractmethod
-    async def login(self, *, dto: UserLoginDTO) -> GenericResult[Token]:
+    async def login(self, *, dto: UserLoginDTO) -> Token:
         ...
         
     @abstractmethod
-    async def login_by_oauth(self, *, login: str) -> GenericResult[Token]:
+    async def login_by_oauth(self, *, login: str) -> Token:
         ...
         
     @abstractmethod
@@ -30,7 +30,7 @@ class BaseAuthService(ABC):
         ...
         
     @abstractmethod
-    async def refresh(self) -> GenericResult[Token]: 
+    async def refresh(self) -> Token: 
         ...
         
     @abstractmethod
@@ -42,11 +42,11 @@ class BaseAuthService(ABC):
         ...
         
     @abstractmethod
-    async def get_user(self) -> GenericResult[User]:
+    async def get_user(self) -> User:
         ...
         
     @abstractmethod
-    async def get_auth_user(self, token: str) -> GenericResult[User]:
+    async def get_auth_user(self, token: str) -> User:
         ...
         
 
@@ -61,7 +61,7 @@ class JWTAuthService(BaseAuthService):
         self._token_storage = token_storage
         self._user_service = user_service
         
-    async def _generate_token(self, user_id: Any):
+    async def _generate_token(self, user_id: Any) -> Token:
         return Token(
             access_token=await self._auth_jwt_service.create_access_token(subject=str(user_id)),
             refresh_token=await self._auth_jwt_service.create_refresh_token(subject=str(user_id))
@@ -70,7 +70,7 @@ class JWTAuthService(BaseAuthService):
     async def _get_jti(self):
         return (await self._auth_jwt_service.get_raw_jwt())["jti"]
     
-    async def _check_token_expiracy(self):
+    async def _check_token_expiracy(self) -> bool:
         jti = await self._get_jti()
         return await self._token_storage.check_expiration(jti=jti)
     
@@ -92,20 +92,16 @@ class JWTAuthService(BaseAuthService):
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             )
             
-    async def login(self, *, dto: UserLoginDTO) -> GenericResult[Token]:
-        user: User = (await self._user_service.get_user_by_login(login=dto.login)).response
+    async def login(self, *, dto: UserLoginDTO) -> Token:
+        user: User = await self._user_service.get_user_by_login(login=dto.login)
         if not user or not user.check_password(dto.password):
-            return GenericResult.failure(
-                error=Error(
-                    message="Wrong password or login"
-                )
-            )
+            raise RuntimeError("Wrong password or login")
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent=dto.user_agent,
-            user_device_type="web",
-            success=True,
-            attempted=datetime.now(UTC)
+            user_device_type=UserDeviceType.web,
+            attempted_at=datetime.now(UTC),
+            is_success=True
         )
         
         await self._user_service.insert_user_login(dto=user_history)
@@ -114,22 +110,18 @@ class JWTAuthService(BaseAuthService):
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
         
-        return GenericResult.success(tokens)
+        return tokens
     
-    async def login_by_oauth(self, *, login) -> GenericResult[Token]:
-        user: User = (await self._user_service.get_user_by_login(login=login)).response
+    async def login_by_oauth(self, *, login) -> Token:
+        user: User = await self._user_service.get_user_by_login(login=login)
         if not user:
-            return GenericResult.failure(
-                error=Error(
-                    message="Wrong password or login"
-                )
-            )
+            raise RuntimeError("User not found")
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent="oauth2",
-            user_device_type="web",
-            success=True,
-            attempted=datetime.now(UTC)
+            user_device_type=UserDeviceType.web,
+            attempted_at=datetime.now(UTC),
+            is_success=True
         )
         
         await self._user_service.insert_user_login(dto=user_history)
@@ -138,7 +130,7 @@ class JWTAuthService(BaseAuthService):
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
         
-        return GenericResult.success(tokens)
+        return tokens
     
     async def logout(self) -> None:
         await self.require_auth()
@@ -148,7 +140,7 @@ class JWTAuthService(BaseAuthService):
         return await self._token_storage.store_token(token_jti=token_jti)
         
         
-    async def refresh(self) -> GenericResult[Token]:
+    async def refresh(self) -> Token:
         await self._refresh_token_required()
         refresh_jti = await self._get_jti()
         token_jti = TokenJTI(
@@ -160,7 +152,7 @@ class JWTAuthService(BaseAuthService):
         tokens = await self._generate_token(user_id=user_subject)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        return GenericResult.success(tokens)
+        return tokens
         
         
     async def require_auth(self) -> None:
@@ -185,12 +177,12 @@ class JWTAuthService(BaseAuthService):
     async def optional_auth(self):
         return await self._auth_jwt_service.jwt_optional()
     
-    async def get_user(self) -> GenericResult[User]:
+    async def get_user(self) -> User:
         await self.require_auth()
         user_subject = await self._auth_jwt_service.get_jwt_subject()
         return await self._user_service.get_user(user_id=user_subject)
     
-    async def get_auth_user(self, access_token: str) -> GenericResult[User]:
+    async def get_auth_user(self, access_token: str) -> User:
         decoded = await self._decode_token(access_token)
         if decoded["exp"] <= time():
             raise HTTPException(
