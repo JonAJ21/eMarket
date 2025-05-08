@@ -35,11 +35,8 @@ def create_app() -> FastAPI:
     app.include_router(users_router, prefix="/users")
     
     
+    
     setup_dependencies(app)
-    
-    
-    
-    
     
     
     return app

@@ -9,58 +9,54 @@ from services.uow import BaseUnitOfWork
 from models.user import User
 from models.user_history import UserHistory
 from schemas.result import GenericResult, Result, Error
-from schemas.social import SocialUser
-from schemas.user import UserCreateDTO, UserHistoryCreateDTO, UserUpdateEmailDTO, UserUpdatePasswordDTO
+from schemas.social import SocialUserDTO
+from schemas.user import UserCreateDTO, UserHistoryCreateDTO, UserUpdatePasswordDTO, UserUpdatePersonalDTO
 
 
 class BaseUserService(ABC):
     @abstractmethod
     async def get_user_history(
         self, *, user_id: Any, skip: int = 0, limit: int = 100
-    ) -> GenericResult[list[UserHistory]]:
+    ) -> list[UserHistory]:
         ...
 
     @abstractmethod
-    async def get_users(self, *, skip: int = 0, limit: int= 100) -> GenericResult[list[User]]:
+    async def get_users(self, *, skip: int = 0, limit: int= 100) -> list[User]:
         ...
 
     @abstractmethod
-    async def update_password(
-        self, *, dto: UserUpdatePasswordDTO
-    ) -> GenericResult[User]:
+    async def update_password(self, *, dto: UserUpdatePasswordDTO) -> User:
         ...
 
     @abstractmethod
-    async def create_user(self, dto: UserCreateDTO) -> GenericResult[User]:
+    async def create_user(self, *, dto: UserCreateDTO) -> User:
         ...
 
     @abstractmethod
-    async def insert_user_login(
-        self, *, dto: UserHistoryCreateDTO
-    ) -> Result:
+    async def insert_user_login(self, *, dto: UserHistoryCreateDTO) -> UserHistory:
         ...
 
     @abstractmethod
-    async def get_user(self, *, user_id: Any) -> GenericResult[User]:
+    async def get_user(self, *, user_id: Any) -> User:
         ...
 
     @abstractmethod
-    async def get_user_by_login(self, *, login: str) -> GenericResult[User]:
+    async def get_user_by_login(self, *, login: str) -> User:
         ...
 
     @abstractmethod
-    async def get_or_create_user(self, *, social: SocialUser) -> GenericResult[User]:
+    async def get_or_create_user(self, *, dto: SocialUserDTO) -> User:
         ...
 
     @abstractmethod
-    async def update_user_email(
-        self, dto: UserUpdateEmailDTO
-    ) -> GenericResult[User]:
+    async def update_personal(self, dto: UserUpdatePersonalDTO) -> User:
         ...
 
     @abstractmethod
-    async def delete_user(self, *, user_id: Any) -> Result:
+    async def delete_user(self, *, user_id: Any) -> None:
         ...
+        
+    
         
 
 class UserService(BaseUserService):
@@ -68,94 +64,65 @@ class UserService(BaseUserService):
         self._repository = repository
         self._uow = uow
         
-    async def get_user_history(self, *, user_id: Any, skip: int = 0, limit: int = 100) -> GenericResult[list[UserHistory]]:
+    async def get_user_history(
+        self, *, user_id: Any, skip: int = 0, limit: int = 100
+    ) -> list[UserHistory]:
         user_history = await self._repository.get_user_history(
             user_id=user_id, skip=skip, limit=limit
         )
-        return GenericResult.success(value=user_history)
+        return user_history
         
-    async def get_users(self, *, skip: int = 0, limit: int = 100) -> GenericResult[list[User]]:
+    async def get_users(self, *, skip: int = 0, limit: int = 100) -> list[User]:
         users = await self._repository.gets(skip=skip, limit=limit)
-        return GenericResult.success(value=users)
+        return users
     
-    async def update_password(self, *, dto: UserUpdatePasswordDTO):
+    async def update_password(self, *, dto: UserUpdatePasswordDTO) -> User:
         user: User = await self._repository.get(id=dto.user_id)
-        if user is None:
-            return GenericResult.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
+        if not user:
+            raise RuntimeError('User not found')
         
-        status = user.change_password(dto.old_password, dto.new_password)
-        if not status:
-            return GenericResult.failure(
-                error=Error(
-                    message='Incorrect password', code='incorrect_password',
-                )
-            )
-        
+        user.change_password(dto.old_password, dto.new_password)
+
         await self._uow.commit()
+        return user
         
-        return GenericResult.success(value=user)
-        
-    async def create_user(self, dto: UserCreateDTO) -> GenericResult[User]:
+    async def create_user(self, dto: UserCreateDTO) -> User:
         user = await self._repository.get_by_login(login=dto.login)
-        if user is not None:
-            return GenericResult.failure(
-                error=Error(
-                    message='User already exists', code='user_already_exists',
-                )
-            )
+        if user:
+            raise RuntimeError('User already exists')
         
         user = await self._repository.insert(data=dto)
         await self._uow.commit()
-        return GenericResult.success(value=user)
+        return user
         
-    async def insert_user_login(self, *, dto: UserHistoryCreateDTO) -> Result:
-        result = await self._repository.insert_user_login(data=dto)
-        if result is None:
-            return Result.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
+    async def insert_user_login(self, *, dto: UserHistoryCreateDTO) -> UserHistory:
+        user_history = await self._repository.insert_user_login(data=dto)
+        if not user_history:
+            raise RuntimeError('User not found')
         await self._uow.commit()
-        return Result.success()
+        return user_history
     
-    async def get_user(self, *, user_id: Any) -> GenericResult[User]:
+    async def get_user(self, *, user_id: Any) -> User:
         user = await self._repository.get(id=user_id)
         if not user:
-            return GenericResult.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
-        return GenericResult.success(value=user)
+            raise RuntimeError('User not found')
+        return user
     
-    async def get_user_by_login(self, *, login: str) -> GenericResult[User]:
+    async def get_user_by_login(self, *, login: str) -> User:
         user = await self._repository.get_by_login(login=login)
-        if user is None:
-            return GenericResult.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
-        return GenericResult.success(value=user)
+        if not user:
+            raise RuntimeError('User not found')
+        return user
     
-    async def get_or_create_user(self, *, social: SocialUser) -> GenericResult[User]:
+    async def get_or_create_user(self, *, social: SocialUserDTO) -> User:
         social_user = await self._repository.get_user_social(
             social_id=social.id, social_name=social.social_name
         )
-        if social_user is None:
+        if not social_user:
             auto_password = Faker().password()
             user = await self.get_user_by_login(login=social.login)
             if user:
-                return GenericResult.failure(
-                    error=Error(
-                        message='User already exists', code='user_already_exists',
-                    )
-                )
+                raise RuntimeError('User already exists')
             
             user_dto = UserCreateDTO(
                 login=social.login,
@@ -171,24 +138,26 @@ class UserService(BaseUserService):
                 )
             )
             await self._uow.commit()
-            return GenericResult.success(value=user)
+            return user
         
         user = await self.get_user(user_id=social_user.user_id)
-        return GenericResult.success(value=user)
+        return user
     
-    async def update_user_email(self, dto: UserUpdateEmailDTO) -> GenericResult[User]:
+    async def update_personal(self, dto: UserUpdatePersonalDTO) -> User:
         user: User = await self._repository.get(id=dto.user_id)
-        if user is None:
-            return GenericResult.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
-        user.update_email(email=dto.email)
+        if not user:
+            raise RuntimeError('User not found')
+        
+        user.update_personal(first_name=dto.first_name,
+                             last_name=dto.last_name,
+                             fathers_name=dto.fathers_name,
+                             phone=dto.phone,
+                             email=dto.email)
+        
         await self._uow.commit()
-        return GenericResult.success(value=user)
+        return user
     
-    async def delete_user(self, *, user_id: Any) -> Result:
+    async def delete_user(self, *, user_id: Any) -> None:
         await self._repository.delete(id=user_id)
         await self._uow.commit()
-        return Result.success()
+        

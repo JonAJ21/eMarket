@@ -22,8 +22,7 @@ class RolePostgreRepository(PostgreRepository[Role, RoleCreateDTO], BaseRoleRepo
     async def get_role_by_name(self, *, name: str) -> Role | None:
         statement = select(self._model).where(self._model.name == name)
         results = await self._session.execute(statement)
-        return results.scalar_one_or_none()
-    
+        return results.scalar_one_or_none()    
 
 class CachedRolePostgreRepository(
     CachedPostgreRepository[Role, RoleCreateDTO],

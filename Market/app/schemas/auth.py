@@ -7,6 +7,3 @@ class UserLoginDTO(BaseModel):
     
 class UserLogout(BaseModel):
     message: str
-    
-# class RefreshRequestDTO(BaseModel):
-#     jti: str

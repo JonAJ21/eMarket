@@ -1,17 +1,18 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from models.role import Role
+from models.user import User
 from repositories.user import BaseUserRepository
 from services.uow import BaseUnitOfWork
-from schemas.result import Error, Result
 
 class BaseUserRoleService(ABC):
     @abstractmethod
-    async def assign_role_to_user(self, user_id: Any, role_id: Any) -> Result:
+    async def assign_role_to_user(self, user_id: Any, role_id: Any) -> None:
         ...
         
     @abstractmethod
-    async def remove_role_from_user(self, user_id: Any, role_id: Any) -> Result:
+    async def remove_role_from_user(self, user_id: Any, role_id: Any) -> None:
         ...
        
 
@@ -21,40 +22,22 @@ class  UserRoleService(BaseUserRoleService):
         self._role_repository = role_repository
         self._uow = uow
         
-    async def assign_role_to_user(self, user_id: Any, role_id: Any) -> Result:
-        user = await self._user_repository.get(id=user_id)
-        role = await self._role_repository.get(id=role_id)
+    async def assign_role_to_user(self, user_id: Any, role_id: Any) -> None:
+        user: User = await self._user_repository.get(id=user_id)
+        role: Role = await self._role_repository.get(id=role_id)
         if not user:
-            return Result.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
+            raise RuntimeError('User not found')
         if not role:
-            return Result.failure(
-                error=Error(
-                    message='Role not found', code='role_not_found',
-                )
-            )
+            raise RuntimeError('Role not found')
         user.assign_role(role)
         await self._uow.commit()
-        return Result.success()
         
-    async def remove_role_from_user(self, user_id: Any, role_id: Any) -> Result:
-        user = await self._user_repository.get(id=user_id)
-        role = await self._role_repository.get(id=role_id)
+    async def remove_role_from_user(self, user_id: Any, role_id: Any) -> None:
+        user: User = await self._user_repository.get(id=user_id)
+        role: Role = await self._role_repository.get(id=role_id)
         if not user:
-            return Result.failure(
-                error=Error(
-                    message='User not found', code='user_not_found',
-                )
-            )
+            raise RuntimeError('User not found')
         if not role:
-            return Result.failure(
-                error=Error(
-                    message='Role not found', code='role_not_found',
-                )
-            )
+            raise RuntimeError('Role not found')
         user.remove_role(role)
         await self._uow.commit()
-        return Result.success()
