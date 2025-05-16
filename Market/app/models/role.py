@@ -13,8 +13,11 @@ from db.postgres import Base
 class Role(Base):
     __tablename__ = 'roles'
 
+    # id: Mapped[UUID] = mapped_column(
+    #     SA_UUID(), primary_key=True, default=uuid4, index=True
+    # )
     id: Mapped[UUID] = mapped_column(
-        SA_UUID(), primary_key=True, default=uuid4, index=True
+        SA_UUID(), primary_key=True, default=uuid4
     )
     
     name: Mapped[str] = mapped_column(

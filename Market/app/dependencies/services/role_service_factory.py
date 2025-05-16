@@ -8,7 +8,7 @@ from db.postgres import get_session
 from db.redis import get_redis
 from dependencies.registrator import add_factory_to_mapper
 from models.role import Role
-from repositories.role import CachedRolePostgreRepository
+from repositories.role import CachedRolePostgreRepository, RolePostgreRepository
 from services.cache import RedisCacheService
 from services.role import BaseRoleService, RoleService
 from services.uow import SQLAlchemyUnitOfWork
@@ -16,7 +16,7 @@ from services.uow import SQLAlchemyUnitOfWork
 
 @add_factory_to_mapper(BaseRoleService)
 @cache
-def create_role_service(
+def create_cached_role_service(
     session: AsyncSession = Depends(get_session), redis: Redis = Depends(get_redis)
 ) -> BaseRoleService:
     cache_service = RedisCacheService(client=redis, model=Role)
@@ -24,6 +24,13 @@ def create_role_service(
         session=session,
         cache_service=cache_service
     )
-    unit_of_work = SQLAlchemyUnitOfWork(_session=session)
+    unit_of_work = SQLAlchemyUnitOfWork(session=session)
     return RoleService(repository=cached_repository, uow=unit_of_work)
     
+@cache
+def create_role_service(
+    session: AsyncSession = Depends(get_session)
+) -> BaseRoleService:
+    repository = RolePostgreRepository(session=session)
+    unit_of_work = SQLAlchemyUnitOfWork(session=session)
+    return RoleService(repository=repository, uow=unit_of_work)

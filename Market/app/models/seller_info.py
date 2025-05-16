@@ -12,8 +12,12 @@ from db.postgres import Base
 class SellerInfo(Base):
     __tablename__ = 'sellers_info'
     
+    # user_id: Mapped[UUID] = mapped_column(
+    #     ForeignKey('users.id', ondelete='CASCADE'), primary_key=True, index=True
+    # )
+    
     user_id: Mapped[UUID] = mapped_column(
-        ForeignKey('users.id', ondelete='CASCADE'), primary_key=True, index=True
+        ForeignKey('users.id', ondelete='CASCADE'), primary_key=True
     )
     
     name: Mapped[str] = mapped_column(String(100), nullable=False)

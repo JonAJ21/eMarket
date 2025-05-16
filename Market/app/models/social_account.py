@@ -17,8 +17,11 @@ class SocialAccount(Base):
         UniqueConstraint('user_id', 'social_name', name='uq_user_social'),
     )
     
+    # id: Mapped[UUID] = mapped_column(
+    #     SA_UUID(), primary_key=True, default=uuid4, index=True
+    # )
     id: Mapped[UUID] = mapped_column(
-        SA_UUID(), primary_key=True, default=uuid4, index=True
+        SA_UUID(), primary_key=True, default=uuid4
     )
     
     user_id: Mapped[UUID] = mapped_column(

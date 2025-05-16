@@ -12,8 +12,11 @@ from db.postgres import Base
 class UserHistory(Base):
     __tablename__ = 'user_history'
     
+    # id: Mapped[UUID] = mapped_column(
+    #     SA_UUID(), primary_key=True, default=uuid4, index=True
+    # )
     id: Mapped[UUID] = mapped_column(
-        SA_UUID(), primary_key=True, default=uuid4, index=True
+        SA_UUID(), primary_key=True, default=uuid4
     )
     
     user_id: Mapped[UUID] = mapped_column(
@@ -33,7 +36,7 @@ class UserHistory(Base):
         Boolean, default=False, nullable=False
     )
     
-    user: Mapped['User'] = relationship(back_populates='user_history')
+    user: Mapped['User'] = relationship(back_populates='history')
     
     def __init__(
         self,

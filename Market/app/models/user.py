@@ -19,9 +19,14 @@ from db.postgres import Base
 class User(Base):
     __tablename__ = 'users'
     
+    # id: Mapped[UUID] = mapped_column(
+    #     SA_UUID(), primary_key=True, default=uuid4, index=True
+    # )
+    
     id: Mapped[UUID] = mapped_column(
-        SA_UUID(), primary_key=True, default=uuid4, index=True
+        SA_UUID(), primary_key=True, default=uuid4
     )
+    
     
     login: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
