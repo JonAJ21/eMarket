@@ -19,20 +19,42 @@ services:
       - postgres_database
       - redis_database
 
+  # postgres_database:
+  #   container_name: postgres_database
+  #   image: postgres:17.2
+  #   environment:
+  #     POSTGRES_DB: "${POSTGRES_DB_NAME}"
+  #     POSTGRES_USER: "${POSTGRES_USER}"
+  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+  #   ports:
+  #     - "${POSTGRES_DB_PORT}:5432"
+  #   volumes:
+  #     - .postgres:/var/lib/postgresql/data
+  #   restart: always
+  #   networks:
+  #     - backend
+
   postgres_database:
     container_name: postgres_database
-    image: postgres:17.2
+    build:
+      context: ./Postgres
+      dockerfile: Dockerfile
     environment:
-      POSTGRES_DB: "${POSTGRES_DB_NAME}"
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-    ports:
+      POSTGRES_DB: "${POSTGRES_DB_NAME}"
+    ports: 
       - "${POSTGRES_DB_PORT}:5432"
     volumes:
       - .postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: always
     networks:
-      - backend
+        - backend
     
   redis_database:
     image: redis:alpine3.21
@@ -54,3 +76,6 @@ networks:
   backend:
     driver: bridge
 
+volumes:
+  postgres_database:
+    driver: local

@@ -18,6 +18,10 @@ class BaseRoleService(ABC):
         ...
         
     @abstractmethod
+    async def get_role_by_name(self, *, name: str) -> Role:
+        ...
+        
+    @abstractmethod
     async def create_role(self, *, dto: RoleCreateDTO ) -> Role:
         ...
         
@@ -45,10 +49,16 @@ class RoleService(BaseRoleService):
             raise RuntimeError('Role not found')
         return role
     
+    async def get_role_by_name(self, *, name: str) -> Role:
+        role = await self._repository.get_role_by_name(name=name)
+        if not role:
+            raise RuntimeError('Role not found')
+        return role
+    
     async def create_role(self, dto: RoleCreateDTO) -> Role:
         role = await self._repository.get_role_by_name(name=dto.name)
         if role:
-            RuntimeError('Role already exists')
+            raise RuntimeError('Role already exists')
         role = await self._repository.insert(data=dto)
         await self._uow.commit()
         return role
@@ -56,7 +66,7 @@ class RoleService(BaseRoleService):
     async def update_role(self, dto: RoleUpdateDTO) -> Role:
         role: Role = await self._repository.get(id=dto.role_id)
         if not role:
-            raise RuntimeError('Role not found')
+            raise Exception('Role not found')
         role.update_role(**dto.model_dump())
         await self._uow.commit()
         return role

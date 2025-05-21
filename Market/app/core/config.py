@@ -67,11 +67,6 @@ class Settings(BaseSettings):
         json_schema_extra={"env": "SUPER_USER_PASSWORD"},
     )
     
-    super_user_email: EmailStr = Field(
-        "superuser@example.com",
-        alias="SUPER_USER_EMAIL",
-        json_schema_extra={"env": "SUPER_USER_EMAIL"},
-    )
     
     
 settings = Settings()

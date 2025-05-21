@@ -12,6 +12,18 @@ from api.v1.users import router as users_router
 
 
 @asynccontextmanager
+async def lifespan():
+    redis.redis = Redis(
+        host=settings.redis_host,
+        port=settings.redis_port,
+        password=settings.redis_password,
+        decode_responses=True,
+        db=0,
+    )
+    yield
+    await redis.redis.close()
+
+@asynccontextmanager
 async def lifespan(_: FastAPI):
     redis.redis = Redis(
         host=settings.redis_host,
@@ -37,6 +49,4 @@ def create_app() -> FastAPI:
     
     
     setup_dependencies(app)
-    
-    
     return app

@@ -19,3 +19,6 @@ uv.lock
 # Redis volume
 .redis
 
+# Genered data for postgres
+data/
+

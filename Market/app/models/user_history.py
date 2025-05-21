@@ -43,11 +43,13 @@ class UserHistory(Base):
         user_id: UUID,
         user_agent: str | None = None,
         user_device_type: UserDeviceType | None = None,
+        attempted_at: datetime | None = func.now(),
         is_success: bool = False
     ):
         self.user_id = user_id
         self.user_agent = user_agent
         self.user_device_type = user_device_type
+        self.attemted_at = attempted_at
         self.is_success = is_success
     
     def __repr__(self):
