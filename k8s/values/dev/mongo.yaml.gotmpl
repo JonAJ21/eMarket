@@ -1,0 +1,24 @@
+architecture: replicaset
+replicaCount: {{ .Environment.Values.mongoReplicaCount }}
+
+auth:
+  enabled: true
+  rootPassword: {{ .Environment.Values.mongoRootPassword }}
+  
+  usernames: {{ .Environment.Values.mongoUsernames }}
+
+  passwords: {{ .Environment.Values.mongoPasswords }}
+  
+  databases: {{ .Environment.Values.mongoDatabases }}
+
+persistence:
+  enabled: true
+  size: 8Gi
+
+resources:
+  limits:
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 256Mi
+    cpu: 250m

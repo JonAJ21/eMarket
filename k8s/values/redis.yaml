@@ -1,0 +1,18 @@
+architecture: replication
+auth:
+  password: ""
+  persistence:
+    enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+replica:
+  replicaCount: 3
+  persistence:
+    enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi

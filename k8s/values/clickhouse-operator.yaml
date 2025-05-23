@@ -1,0 +1,5 @@
+operator:
+  watchNamespaces:
+    - ""
+metrics:
+  enabled: true

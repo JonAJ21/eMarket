@@ -6,7 +6,7 @@ global:
     repmgrPassword: {{ .Environment.Values.repmgrPassword }}
 
 postgresql:
-  replicaCount: {{ .Environment.Values.replicaCount }}
+  replicaCount: {{ .Environment.Values.postgresReplicaCount }}
   persistence:
     size: 8Gi
     storageClass: "standard"

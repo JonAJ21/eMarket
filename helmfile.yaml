@@ -11,16 +11,73 @@ environments:
 repositories:
   - name: bitnami
     url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+  - name: kafka-ui
+    url: https://provectus.github.io/kafka-ui-charts
 
 
 releases:
 
-  - name: postgresql-ha
-    namespace: {{ .Environment.Name }}
-    chart: bitnami/postgresql-ha
-    values:
-      - k8s/values/pgsql.yaml
-      - k8s/values/{{ .Environment.Name }}/pgsql.yaml.gotmpl
-          
-
+  # - name: postgresql-ha
+  #   namespace: {{ .Environment.Name }}
+  #   chart: bitnami/postgresql-ha
+  #   values:
+  #     - k8s/values/pgsql.yaml
+  #     - k8s/values/{{ .Environment.Name }}/pgsql.yaml.gotmpl
   
+  # - name: redis
+  #   namespace: {{ .Environment.Name }}
+  #   chart: bitnami/redis
+  #   values:
+  #     - k8s/values/redis.yaml
+  #     - k8s/values/{{ .Environment.Name }}/redis.yaml.gotmpl
+
+  # - name: mongodb
+  #   namespace: {{ .Environment.Name }}
+  #   chart: bitnami/mongodb
+  #   values:
+  #     - k8s/values/mongo.yaml
+  #     - k8s/values/{{ .Environment.Name }}/mongo.yaml.gotmpl
+
+  # - name: kafka
+  #   namespace: {{ .Environment.Name }}
+  #   chart: bitnami/kafka
+  #   version: 24.0.0
+  #   values:
+  #     - k8s/values/kafka.yaml
+  #     - k8s/values/{{ .Environment.Name }}/kafka.yaml.gotmpl
+
+  # - name: kafka-ui
+  #   namespace: {{ .Environment.Name }}
+  #   chart: kafka-ui/kafka-ui
+  #   needs:
+  #     - kafka
+  #   values:
+  #     - k8s/values/kafka-ui.yaml
+  #     - k8s/values/{{ .Environment.Name }}/kafka-ui.yaml.gotmpl
+
+  - name: zookeeper
+    namespace: {{ .Environment.Name }}
+    chart: bitnami/zookeeper
+    version: 11.1.6
+    values:
+      - k8s/values/zookeeper.yaml
+      - k8s/values/{{ .Environment.Name }}/zookeeper.yaml.gotmpl
+
+
+  - name: clickhouse-operator
+    namespace: {{ .Environment.Name }}
+    chart: bitnami/clickhouse-operator
+    version: 0.2.4
+    values:
+      - k8s/values/clickhouse-operator.yaml
+      - k8s/values/{{ .Environment.Name }}/clickhouse-operator.yaml.gotmpl
+
+  - name: clickhouse-cluster
+    namespace: {{ .Environment.Name }}
+    chart: bitnami/clickhouse
+    version: 9.2.2
+    values:
+      - k8s/values/clickhouse.yaml
+      - k8s/values/{{ .Environment.Name }}/clickhouse.yaml.gotmpl
+
+    
