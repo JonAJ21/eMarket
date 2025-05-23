@@ -1,21 +1,21 @@
 from datetime import datetime
 from typing import List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from bson import ObjectId
-from .product import PyObjectId
 
 class CartItem(BaseModel):
-    product_id: PyObjectId
+    product_id: str
     quantity: int = Field(gt=0)
 
 class Cart(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    user_id: PyObjectId
+    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    user_id: str
     items: List[CartItem] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        json_encoders = {ObjectId: str}
-        populate_by_name = True
-        arbitrary_types_allowed = True 
+    model_config = ConfigDict(
+        json_encoders={ObjectId: str},
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    ) 

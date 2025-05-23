@@ -1,11 +1,10 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, conint
+from pydantic import BaseModel, Field, conint, ConfigDict
 from datetime import datetime
 from bson import ObjectId
-from .product import PyObjectId
 
 class CartItemBase(BaseModel):
-    product_id: PyObjectId
+    product_id: str
     quantity: conint(gt=0)
 
 class CartItemCreate(CartItemBase):
@@ -18,7 +17,7 @@ class CartItemInDB(CartItemBase):
     pass
 
 class CartBase(BaseModel):
-    user_id: PyObjectId
+    user_id: str
     items: List[CartItemInDB] = []
 
 class CartCreate(CartBase):
@@ -28,14 +27,15 @@ class CartUpdate(BaseModel):
     items: List[CartItemInDB]
 
 class CartInDB(CartBase):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        json_encoders = {ObjectId: str}
-        populate_by_name = True
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        json_encoders={ObjectId: str},
+        populate_by_name=True,
+        arbitrary_types_allowed=True
+    )
 
 class CartResponse(CartInDB):
     pass
