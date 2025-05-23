@@ -1,0 +1,35 @@
+global: 
+  postgresql:
+    postgresqlDatabase: {{ .Environment.Values.postgresDB }}
+    postgresqlUsername: {{ .Environment.Values.postgresUser }}
+    postgresqlPassword: {{ .Environment.Values.postgresPassword }}
+    repmgrPassword: {{ .Environment.Values.repmgrPassword }}
+
+postgresql:
+  replicaCount: {{ .Environment.Values.replicaCount }}
+  persistence:
+    size: 8Gi
+    storageClass: "standard"
+
+  initdbScripts:
+    init-user-db.sql: {{ .Environment.Values.sqlScript | indent 6 }}
+    
+pgpool:
+  adminPassword: {{ .Environment.Values.postgresPassword}}
+  replicaCount: 1
+  customUsers:
+    usernames: {{ .Environment.Values.usernames }}
+    passwords: {{ .Environment.Values.passwords }}
+  repmgrUsername: {{ .Environment.Values.repmgrUsername }}
+  repmgrPassword: {{ .Environment.Values.repmgrPassword }}
+  config:
+    pool_hba_conf: |
+      host all all 0.0.0.0/0 md5
+      local all all md5
+
+service:
+  type: NodePort
+  port: 5432
+  nodePorts:
+    postgresql: 32432
+

@@ -1,0 +1,26 @@
+environments:
+  dev:
+    values:
+      - k8s/environments/dev.yaml
+  prod:
+    values:
+      - k8s/environments/prod.yaml
+
+---
+
+repositories:
+  - name: bitnami
+    url: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+
+
+releases:
+
+  - name: postgresql-ha
+    namespace: {{ .Environment.Name }}
+    chart: bitnami/postgresql-ha
+    values:
+      - k8s/values/pgsql.yaml
+      - k8s/values/{{ .Environment.Name }}/pgsql.yaml.gotmpl
+          
+
+  

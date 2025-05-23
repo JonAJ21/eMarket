@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emarket
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: emarket
+  template:
+    metadata:
+      labels:
+        app: emarket
+    spec:
+      containers:
+        - name: emarket
+          image: emarket  
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: emarket-secrets
+                  key: DB_USERNAME
