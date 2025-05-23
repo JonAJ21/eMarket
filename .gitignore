@@ -19,6 +19,9 @@ uv.lock
 # Redis volume
 .redis
 
-# Kubernetes secrets
 
+# Data
+data/
+
+# Kubernetes envs
 environments/
