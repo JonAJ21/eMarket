@@ -1,8 +1,8 @@
 from typing import List, Optional
 from bson import ObjectId
-from ..models.cart import Cart, CartItem
-from ..repositories.cart_repository import CartRepository
-from ..repositories.product_repository import ProductRepository
+from models.cart import Cart, CartItem
+from repositories.cart_repository import CartRepository
+from repositories.product_repository import ProductRepository
 
 class CartService:
     def __init__(self):

@@ -1,8 +1,8 @@
 from typing import List, Optional
 from bson import ObjectId
-from ..models.review import Review
-from ..repositories.review_repository import ReviewRepository
-from ..repositories.product_repository import ProductRepository
+from models.review import Review
+from repositories.review_repository import ReviewRepository
+from repositories.product_repository import ProductRepository
 
 class ReviewService:
     def __init__(self):

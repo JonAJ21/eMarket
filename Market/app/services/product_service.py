@@ -1,31 +1,67 @@
 from typing import List, Optional
-from bson import ObjectId
-from ..models.product import Product
-from ..repositories.product_repository import ProductRepository
-from ..repositories.category_repository import CategoryRepository
+from datetime import datetime
+from models.product import Product
+from schemas.product import ProductCreate, ProductUpdate
+from repositories.product_repository import ProductRepository
+from repositories.category_repository import CategoryRepository
 
 class ProductService:
     def __init__(self):
-        self.product_repo = ProductRepository()
-        self.category_repo = CategoryRepository()
+        self._product_repo = None
+        self._category_repo = None
 
-    async def create_product(self, product: Product) -> Product:
+    @property
+    def product_repo(self) -> ProductRepository:
+        if self._product_repo is None:
+            self._product_repo = ProductRepository()
+        return self._product_repo
+
+    @property
+    def category_repo(self) -> CategoryRepository:
+        if self._category_repo is None:
+            self._category_repo = CategoryRepository()
+        return self._category_repo
+
+    async def create_product(self, product: ProductCreate) -> Product:
         # Проверяем существование категории
-        category = await self.category_repo.get_by_id(str(product.category_id))
+        category = await self.category_repo.get_by_id(product.category_id)
         if not category:
             raise ValueError("Category not found")
-        return await self.product_repo.create(product)
+            
+        # Создаем модель Product из ProductCreate
+        product_model = Product(
+            name=product.name,
+            description=product.description,
+            price=product.price,
+            category_id=product.category_id,
+            stock=product.stock,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        return await self.product_repo.create(product_model)
 
     async def get_product(self, product_id: str) -> Optional[Product]:
         return await self.product_repo.get_by_id(product_id)
 
-    async def update_product(self, product_id: str, product: Product) -> Optional[Product]:
+    async def update_product(self, product_id: str, product: ProductUpdate) -> Optional[Product]:
+        # Получаем существующий продукт
+        existing_product = await self.product_repo.get_by_id(product_id)
+        if not existing_product:
+            return None
+
         # Проверяем существование категории при обновлении
         if product.category_id:
-            category = await self.category_repo.get_by_id(str(product.category_id))
+            category = await self.category_repo.get_by_id(product.category_id)
             if not category:
                 raise ValueError("Category not found")
-        return await self.product_repo.update(product_id, product)
+
+        # Обновляем поля
+        update_data = product.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(existing_product, field, value)
+        existing_product.updated_at = datetime.utcnow()
+
+        return await self.product_repo.update(product_id, existing_product)
 
     async def delete_product(self, product_id: str) -> bool:
         return await self.product_repo.delete(product_id)
