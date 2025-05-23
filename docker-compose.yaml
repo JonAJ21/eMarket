@@ -18,6 +18,7 @@ services:
     depends_on:
       - postgres_database
       - redis_database
+      - mongodb_database
 
   postgres_database:
     container_name: postgres_database
@@ -48,8 +49,21 @@ services:
     networks:
       - backend
 
+  mongodb_database:
+    container_name: mongodb_database
+    image: mongo:latest
+    environment:
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME}
+      MONGODB_USERNAME: ${MONGODB_USERNAME}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD}
+    ports:
+      - "${MONGODB_PORT}:27017"
+    volumes:
+      - .mongodb:/data/db
+    restart: always
+    networks:
+      - backend
   
-    
 networks: 
   backend:
     driver: bridge
