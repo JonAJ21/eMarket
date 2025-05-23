@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from ...schemas.product import ProductCreate, ProductUpdate, ProductResponse
-from ...services.product_service import ProductService
+from schemas.product import ProductCreate, ProductUpdate, ProductResponse
+from services.product_service import ProductService
 
 router = APIRouter()
 product_service = ProductService()

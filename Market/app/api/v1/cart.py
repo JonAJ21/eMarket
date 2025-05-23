@@ -1,8 +1,8 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from ...schemas.cart import CartResponse, CartItemResponse
-from ...services.cart_service import CartService
-from ...services.product_service import ProductService
+from schemas.cart import CartResponse, CartItemResponse
+from services.cart_service import CartService
+from services.product_service import ProductService
 
 router = APIRouter()
 cart_service = CartService()

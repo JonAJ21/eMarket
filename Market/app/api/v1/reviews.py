@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from ...schemas.review import ReviewCreate, ReviewUpdate, ReviewResponse, ProductRating
-from ...services.review_service import ReviewService
+from schemas.review import ReviewCreate, ReviewUpdate, ReviewResponse, ProductRating
+from services.review_service import ReviewService
 
 router = APIRouter()
 review_service = ReviewService()

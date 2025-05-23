@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Query
-from ...schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryWithSubcategories
-from ...services.category_service import CategoryService
+from schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse, CategoryWithSubcategories
+from services.category_service import CategoryService
 
 router = APIRouter()
 category_service = CategoryService()
