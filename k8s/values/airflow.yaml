@@ -1,0 +1,35 @@
+airflow:
+  executor: "CeleryExecutor"
+  webserverSecretKey: "your-secret-key-here" 
+  fernetKey: "your-fernet-key-here"
+  loadExamples: true
+  baseUrl: "http://localhost"
+
+postgresql:
+  enabled: true
+  auth:
+    username: "bn_airflow"
+    password: "your-postgres-password"
+    database: "bitnami_airflow"
+
+redis:
+  enabled: true
+  auth:
+    password: "your-redis-password" 
+
+scheduler:
+  replicas: 1
+
+worker:
+  replicas: 2    
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+
+persistence:
+  enabled: true
+  size: "8Gi"   
+
+metrics:
+  enabled: false
