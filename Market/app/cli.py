@@ -35,15 +35,15 @@ def async_typer(func):
 async def init_roles():
     roles = [role.value for role in Roles.__members__.values()]
     try:
-        async with get_session() as session:
-            role_service: BaseRoleService = create_role_service(session=session)
-            for role in roles:
-                dto: RoleCreateDTO = RoleCreateDTO(
-                    name=role,
-                    description=f"{role}"
-                )
-                role = await role_service.create_role(dto=dto)
-                print(f"Role {role.name} created with ID {role.id}")
+        session = get_session()
+        role_service: BaseRoleService = create_role_service(session=session)
+        for role in roles:
+            dto: RoleCreateDTO = RoleCreateDTO(
+                name=role,
+                description=f"{role}"
+            )
+            role = await role_service.create_role(dto=dto)
+            print(f"Role {role.name} created with ID {role.id}")
     except Exception as e:    
         print(e)
 

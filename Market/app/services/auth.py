@@ -197,7 +197,7 @@ def require_roles(roles: list[str]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             auth_service = kwargs["auth_service"]
-            current_user: User = (await auth_service.get_user()).response
+            current_user: User = (await auth_service.get_user())
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"

@@ -20,7 +20,7 @@ class UserHistoryCreateDTO(BaseModel):
     user_id: UUID
     user_agent: str
     user_device_type: UserDeviceType
-    attempted_at: datetime
+    # attempted_at: datetime
     is_success: bool
     
 class UserUpdatePasswordDTO(BaseModel):

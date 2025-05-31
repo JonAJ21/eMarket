@@ -9,6 +9,7 @@ from core.config import settings
 class Base(DeclarativeBase):
     ...
 
+
 engine = create_async_engine(
     str(settings.postgres_connection),
     echo=settings.echo,
@@ -21,7 +22,6 @@ async_session = async_sessionmaker(
     expire_on_commit=False,
 )
 
-@asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         try:

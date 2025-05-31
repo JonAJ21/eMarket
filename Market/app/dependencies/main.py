@@ -6,6 +6,7 @@ import dependencies.services.role_service_factory
 import dependencies.services.user_service_factory
 import dependencies.services.token_storage_factory
 import dependencies.services.user_role_service_factory
+import dependencies.services.pubsub_factory
 
 from dependencies.registrator import dependencies_container
 
