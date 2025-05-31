@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from enum import Enum
+from typing import Optional, List
 
 from pydantic import BaseModel, EmailStr
 
@@ -37,3 +38,26 @@ class UserUpdatePersonalDTO(BaseModel):
     phone: str | None = None
     email: EmailStr | None = None
     
+
+class UserResponse(BaseModel):
+    id: UUID
+    email: EmailStr
+    full_name: Optional[str]
+    is_active: bool
+    role_id: Optional[UUID]
+    created_at: datetime
+    updated_at: datetime
+
+class UserUpdateDTO(BaseModel):
+    full_name: Optional[str]
+    email: Optional[EmailStr]
+    password: Optional[str]
+
+class UserHistoryResponse(BaseModel):
+    action: str
+    timestamp: datetime
+    details: Optional[str]
+
+class UserListResponse(BaseModel):
+    users: List[UserResponse]
+    total: int

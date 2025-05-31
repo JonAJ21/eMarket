@@ -5,10 +5,11 @@ from datetime import datetime
 
 from schemas.role import Roles
 from services.user import BaseUserService
-from schemas.user import UserBase, UserUpdatePasswordDTO, UserUpdatePersonalDTO, UserCreateDTO
+from schemas.user import UserBase, UserUpdatePasswordDTO, UserUpdatePersonalDTO, UserCreateDTO, UserResponse, UserUpdateDTO, UserListResponse, UserHistoryResponse
 from services.auth import BaseAuthService, require_roles
 from schemas.result import GenericResult
 from services.user_role import BaseUserRoleService
+from dependencies.services.user_service_factory import get_user_service
 
 # --- Response schemas ---
 from pydantic import BaseModel
@@ -197,3 +198,76 @@ async def delete_profile(
     # Implement logic to check password and delete user
     # await user_service.delete_user(user_id=user.id)
     return SuccessMessage()
+
+@router.get("/me", response_model=UserResponse, summary="Get your profile")
+async def get_own_profile(
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(get_user_service),
+):
+    user = await auth_service.get_user()
+    result = await user_service.get_user_by_id(user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result
+
+@router.put("/me", response_model=UserResponse, summary="Update your profile")
+async def update_own_profile(
+    dto: UserUpdateDTO = Body(...),
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(get_user_service),
+):
+    user = await auth_service.get_user()
+    result = await user_service.update_user(user.id, dto)
+    return result
+
+@router.get("/", response_model=UserListResponse, summary="List users")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def list_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1),
+    user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    return await user_service.list_users(skip=skip, limit=limit)
+
+@router.put("/{user_id}", response_model=UserResponse, summary="Update user by ID")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def update_user_by_id(
+    user_id: UUID = Path(...),
+    dto: UserUpdateDTO = Body(...),
+    user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    return await user_service.update_user(user_id, dto)
+
+@router.delete("/{user_id}", summary="Delete user by ID")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def delete_user_by_id(
+    user_id: UUID = Path(...),
+    user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    await user_service.delete_user(user_id)
+    return {"message": "Success"}
+
+@router.put("/{user_id}/assign-role", summary="Assign role to user")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def assign_role(
+    user_id: UUID = Path(...),
+    role_id: UUID = Body(..., embed=True),
+    user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    await user_service.assign_role(user_id, role_id)
+    return {"message": "Success"}
+
+@router.get("/{user_id}/history", response_model=List[UserHistoryResponse], summary="Get user history")
+async def get_user_history(
+    user_id: UUID = Path(...),
+    user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    current_user = await auth_service.get_user()
+    if current_user.id != user_id and current_user.role_id not in [Roles.ADMIN, Roles.SUPER_ADMIN]:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    return await user_service.get_user_history(user_id)

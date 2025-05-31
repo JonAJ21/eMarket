@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List, Optional
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from faker import Faker
 
@@ -10,7 +12,7 @@ from models.user import User
 from models.user_history import UserHistory
 from schemas.result import GenericResult, Result, Error
 from schemas.social import SocialUserDTO
-from schemas.user import UserCreateDTO, UserHistoryCreateDTO, UserUpdatePasswordDTO, UserUpdatePersonalDTO
+from schemas.user import UserCreateDTO, UserHistoryCreateDTO, UserUpdatePasswordDTO, UserUpdatePersonalDTO, UserUpdateDTO, UserResponse, UserHistoryResponse, UserListResponse
 
 
 class BaseUserService(ABC):
@@ -55,14 +57,28 @@ class BaseUserService(ABC):
     @abstractmethod
     async def delete_user(self, *, user_id: Any) -> None:
         ...
-        
-    
-        
+
+    @abstractmethod
+    async def get_user_by_id(self, user_id: UUID) -> Optional[UserResponse]: ...
+
+    @abstractmethod
+    async def list_users(self, skip: int, limit: int) -> UserListResponse: ...
+
+    @abstractmethod
+    async def update_user(self, user_id: UUID, dto: UserUpdateDTO) -> UserResponse: ...
+
+    @abstractmethod
+    async def assign_role(self, user_id: UUID, role_id: UUID) -> None: ...
+
+    @abstractmethod
+    async def get_user_history(self, user_id: UUID) -> List[UserHistoryResponse]: ...
+
 
 class UserService(BaseUserService):
-    def __init__(self, repository: BaseUserRepository, uow: BaseUnitOfWork):
+    def __init__(self, repository: BaseUserRepository, uow: BaseUnitOfWork, session: AsyncSession):
         self._repository = repository
         self._uow = uow
+        self._session = session
         
     async def get_user_history(
         self, *, user_id: Any, skip: int = 0, limit: int = 100
@@ -159,4 +175,24 @@ class UserService(BaseUserService):
     async def delete_user(self, *, user_id: Any) -> None:
         await self._repository.delete(id=user_id)
         await self._uow.commit()
+
+    async def get_user_by_id(self, user_id: UUID) -> Optional[UserResponse]:
+        # TODO: Implement DB logic
+        pass
+
+    async def list_users(self, skip: int, limit: int) -> UserListResponse:
+        # TODO: Implement DB logic
+        pass
+
+    async def update_user(self, user_id: UUID, dto: UserUpdateDTO) -> UserResponse:
+        # TODO: Implement DB logic
+        pass
+
+    async def assign_role(self, user_id: UUID, role_id: UUID) -> None:
+        # TODO: Implement DB logic
+        pass
+
+    async def get_user_history(self, user_id: UUID) -> List[UserHistoryResponse]:
+        # TODO: Implement DB logic
+        pass
         

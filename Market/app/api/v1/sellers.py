@@ -5,14 +5,15 @@ from schemas.seller import SellerCreateDTO
 from pydantic import BaseModel
 from services.auth import BaseAuthService, require_roles
 from schemas.role import Roles
+from dependencies.services.seller_service_factory import get_seller_service
+from services.seller import BaseSellerService
 
-# --- Response Schemas ---
 class SellerInfoResponse(BaseModel):
     user_id: UUID
     name: str
     address: str
     postal_code: str
-    phone: Optional[str]
+    phone: Optional[str] = None
     inn: str
     kpp: str
     payment_account: str
@@ -20,6 +21,9 @@ class SellerInfoResponse(BaseModel):
     bank: str
     bik: str
     is_verified: bool
+
+    class Config:
+        from_attributes = True
 
 class SuccessMessage(BaseModel):
     message: str = "Success"
@@ -31,62 +35,68 @@ router = APIRouter(tags=["Markets"])
 async def create_store(
     dto: SellerCreateDTO = Body(...),
     auth_service: BaseAuthService = Depends(),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
     user = await auth_service.get_user()
-    # Implement: seller = await seller_service.create_store(user_id=user.id, dto=dto)
-    # For now, just return dummy
-    return SellerInfoResponse(user_id=user.id, **dto.dict(), is_verified=False)
+    try:
+        seller = await seller_service.create_store(user_id=user.id, dto=dto)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    return SellerInfoResponse.from_orm(seller)
 
 # 2. Update information about the store (your own)
 @router.put("/", response_model=SellerInfoResponse, summary="Update your store", description="Update information about the store (your own)")
 async def update_store(
     dto: SellerCreateDTO = Body(...),
     auth_service: BaseAuthService = Depends(),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
     user = await auth_service.get_user()
-    # Implement: seller = await seller_service.update_store(user_id=user.id, dto=dto)
-    return SellerInfoResponse(user_id=user.id, **dto.dict(), is_verified=False)
+    seller = await seller_service.update_store(user_id=user.id, dto=dto)
+    return SellerInfoResponse.from_orm(seller)
 
 # 3. Delete the store (your own)
 @router.delete("/", response_model=SuccessMessage, summary="Delete your store", description="Delete the store (your own)")
 async def delete_store(
     auth_service: BaseAuthService = Depends(),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
     user = await auth_service.get_user()
-    # Implement: await seller_service.delete_store(user_id=user.id)
+    await seller_service.delete_store(user_id=user.id)
     return SuccessMessage()
 
 # 4. View information about the store (your own)
 @router.get("/profile", response_model=SellerInfoResponse, summary="View your store", description="View information about the store (your own)")
 async def get_own_store(
     auth_service: BaseAuthService = Depends(),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
     user = await auth_service.get_user()
-    # Implement: seller = await seller_service.get_store_by_user(user_id=user.id)
-    return SellerInfoResponse(user_id=user.id, name="Store", address="Address", postal_code="000000", phone=None, inn="", kpp="", payment_account="", correspondent_account="", bank="", bik="", is_verified=False)
+    seller = await seller_service.get_store_by_user(user_id=user.id)
+    if not seller:
+        raise HTTPException(status_code=404, detail="Store not found")
+    return SellerInfoResponse.from_orm(seller)
 
 # 5. Get information about the limit of stores confirmed by the administration, starting with skip
 @router.get("/", response_model=List[SellerInfoResponse], summary="List verified stores", description="Get information about the limit of stores confirmed by the administration, starting with skip")
 async def list_verified_stores(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
-    # Implement: sellers = await seller_service.list_verified_stores(skip=skip, limit=limit)
-    return []
+    sellers = await seller_service.list_verified_stores(skip=skip, limit=limit)
+    return [SellerInfoResponse.from_orm(s) for s in sellers]
 
 # 6. Get information about the store's market_id
 @router.get("/{market_id}", response_model=SellerInfoResponse, summary="Get store by ID", description="Get information about the store's market_id")
 async def get_store_by_id(
     market_id: UUID = Path(...),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
 ):
-    # Implement: seller = await seller_service.get_store_by_id(market_id)
-    return SellerInfoResponse(user_id=market_id, name="Store", address="Address", postal_code="000000", phone=None, inn="", kpp="", payment_account="", correspondent_account="", bank="", bik="", is_verified=False)
+    seller = await seller_service.get_store_by_id(market_id)
+    if not seller:
+        raise HTTPException(status_code=404, detail="Store not found")
+    return SellerInfoResponse.from_orm(seller)
 
 # 7. Get information about the limit of unconfirmed stores starting with skip
 @router.get("/unverified", response_model=List[SellerInfoResponse], summary="List unverified stores", description="Get information about the limit of unconfirmed stores starting with skip")
@@ -94,19 +104,19 @@ async def get_store_by_id(
 async def list_unverified_stores(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
     auth_service: BaseAuthService = Depends(),
 ):
-    # Implement: sellers = await seller_service.list_unverified_stores(skip=skip, limit=limit)
-    return []
+    sellers = await seller_service.list_unverified_stores(skip=skip, limit=limit)
+    return [SellerInfoResponse.from_orm(s) for s in sellers]
 
 # 8. Verify the store
 @router.put("/{market_id}/verify", response_model=SuccessMessage, summary="Verify a store", description="Verify the store")
 @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def verify_store(
     market_id: UUID = Path(...),
-    seller_service = Depends(),
+    seller_service: BaseSellerService = Depends(get_seller_service),
     auth_service: BaseAuthService = Depends(),
 ):
-    # Implement: await seller_service.verify_store(market_id)
+    await seller_service.verify_store(market_id)
     return SuccessMessage() 

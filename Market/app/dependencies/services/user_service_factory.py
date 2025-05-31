@@ -26,4 +26,7 @@ def create_user_service(
         session=session,
         cache_service=cache_service,    
     )
-    return UserService(repository=cached_repository, uow=unit_of_work)
+    return UserService(repository=cached_repository, uow=unit_of_work, session=session)
+
+def get_user_service(session: AsyncSession = Depends(get_session)) -> BaseUserService:
+    return UserService(session=session)
