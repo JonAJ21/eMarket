@@ -30,6 +30,7 @@ class UserUpdatePasswordDTO(BaseModel):
     
 
 class UserUpdatePersonalDTO(BaseModel):
+    user_id: UUID
     first_name: str | None = None
     last_name: str | None = None
     fathers_name: str | None = None

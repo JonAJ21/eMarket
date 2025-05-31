@@ -92,45 +92,39 @@ class JWTAuthService(BaseAuthService):
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             )
             
-    async def login(self, *, dto: UserLoginDTO) -> Token:
+    async def login(self, *, dto: UserLoginDTO) -> GenericResult[Token]:
         user: User = await self._user_service.get_user_by_login(login=dto.login)
         if not user or not user.check_password(dto.password):
-            raise RuntimeError("Wrong password or login")
+            return GenericResult.failure(Error(message="Wrong password or login", code="auth_failed"))
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent=dto.user_agent,
             user_device_type=UserDeviceType.web,
-            attempted_at=datetime.now(UTC),
+            attempted_at=datetime.now(),
             is_success=True
         )
-        
         await self._user_service.insert_user_login(dto=user_history)
-        
         tokens = await self._generate_token(user_id=user.id)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        
-        return tokens
+        return GenericResult.success(tokens)
     
-    async def login_by_oauth(self, *, login) -> Token:
+    async def login_by_oauth(self, *, login: str) -> GenericResult[Token]:
         user: User = await self._user_service.get_user_by_login(login=login)
         if not user:
-            raise RuntimeError("User not found")
+            return GenericResult.failure(Error(message="User not found", code="user_not_found"))
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent="oauth2",
             user_device_type=UserDeviceType.web,
-            attempted_at=datetime.now(UTC),
+            attempted_at=datetime.now(),
             is_success=True
         )
-        
         await self._user_service.insert_user_login(dto=user_history)
-        
         tokens = await self._generate_token(user_id=user.id)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        
-        return tokens
+        return GenericResult.success(tokens)
     
     async def logout(self) -> None:
         await self.require_auth()
@@ -140,7 +134,7 @@ class JWTAuthService(BaseAuthService):
         return await self._token_storage.store_token(token_jti=token_jti)
         
         
-    async def refresh(self) -> Token:
+    async def refresh(self) -> GenericResult[Token]:
         await self._refresh_token_required()
         refresh_jti = await self._get_jti()
         token_jti = TokenJTI(
@@ -152,7 +146,7 @@ class JWTAuthService(BaseAuthService):
         tokens = await self._generate_token(user_id=user_subject)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        return tokens
+        return GenericResult.success(tokens)
         
         
     async def require_auth(self) -> None:
@@ -197,7 +191,7 @@ def require_roles(roles: list[str]):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             auth_service = kwargs["auth_service"]
-            current_user: User = (await auth_service.get_user()).response
+            current_user: User = await auth_service.get_user()
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"

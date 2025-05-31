@@ -19,9 +19,14 @@ from db.postgres import Base
 class User(Base):
     __tablename__ = 'users'
     
+    # id: Mapped[UUID] = mapped_column(
+    #     SA_UUID(), primary_key=True, default=uuid4, index=True
+    # )
+    
     id: Mapped[UUID] = mapped_column(
-        SA_UUID(), primary_key=True, default=uuid4, index=True
+        SA_UUID(), primary_key=True, default=uuid4
     )
+    
     
     login: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -30,7 +35,7 @@ class User(Base):
     last_name: Mapped[str | None] = mapped_column(String(50))
     fathers_name: Mapped[str | None] = mapped_column(String(50))
     
-    phone: Mapped[str | None] = mapped_column(String(11), unique=True)
+    phone: Mapped[str | None] = mapped_column(String(20), unique=True)
     email: Mapped[EmailStr | None] = mapped_column(String(100), unique=True)
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -60,25 +65,11 @@ class User(Base):
         self,
         login: str,
         password: str,
-        first_name: str | None = None,
-        last_name: str | None = None,
-        fathers_name: str | None = None,   
-        phone: str | None = None,  
-        email: EmailStr | None = None,
         
     ) -> None:
-        self.id = uuid4()
         self.login = login
         self.password = hashpw(password.encode(), gensalt()).decode()
-        self.first_name = first_name,
-        self.last_name = last_name,
-        self.fathers_name = fathers_name,
-        self.phone = phone
-        self.email = email
-        self.roles = []
-        self.social_accounts = []
-        self.history = []
-        self.seller_info = []
+        
         
     def __repr__(self) -> str:
         return f'<User(id={self.id}, login={self.login})>'
@@ -148,11 +139,9 @@ class User(Base):
     def has_seller_info(self) -> bool:
         return self.seller_info is not None
     
-    def add_seller_info(self, seller_info: 'SellerInfo') -> None:
-        if not self.has_seller_info():
-            self.seller_info = seller_info
-        else:
-            raise ValueError('Seller info already exists for this user')
+    def add_seller_info(self, seller_info: SellerInfo) -> None:
+        self.seller_info = seller_info
+       
 
     def remove_seller_info(self) -> None:
         if self.has_seller_info():

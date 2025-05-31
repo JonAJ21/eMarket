@@ -29,7 +29,7 @@ class BaseUserService(ABC):
         ...
 
     @abstractmethod
-    async def create_user(self, *, dto: UserCreateDTO) -> User:
+    async def create_user(self, *, dto: UserCreateDTO) -> GenericResult[User]:
         ...
 
     @abstractmethod
@@ -86,14 +86,13 @@ class UserService(BaseUserService):
         await self._uow.commit()
         return user
         
-    async def create_user(self, dto: UserCreateDTO) -> User:
+    async def create_user(self, dto: UserCreateDTO) -> GenericResult[User]:
         user = await self._repository.get_by_login(login=dto.login)
         if user:
-            raise RuntimeError('User already exists')
-        
+            return GenericResult.failure(Error(message="User already exists", code="user_exists"))
         user = await self._repository.insert(data=dto)
         await self._uow.commit()
-        return user
+        return GenericResult.success(user)
         
     async def insert_user_login(self, *, dto: UserHistoryCreateDTO) -> UserHistory:
         user_history = await self._repository.insert_user_login(data=dto)
