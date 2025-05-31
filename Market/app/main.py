@@ -9,6 +9,8 @@ from db import redis
 from core.config import settings
 from api.v1.accounts import router as accounts_router
 from api.v1.users import router as users_router
+from api.v1.roles import router as roles_router
+from api.v1.sellers import router as sellers_router
 
 
 @asynccontextmanager
@@ -33,6 +35,8 @@ def create_app() -> FastAPI:
     
     app.include_router(accounts_router, prefix="/accounts")
     app.include_router(users_router, prefix="/users")
+    app.include_router(roles_router, prefix="/roles")
+    app.include_router(sellers_router, prefix="/markets")
     
     
     

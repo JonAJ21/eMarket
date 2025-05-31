@@ -8,6 +8,7 @@ from services.user import BaseUserService
 from schemas.user import UserBase, UserUpdatePasswordDTO, UserUpdatePersonalDTO, UserCreateDTO
 from services.auth import BaseAuthService, require_roles
 from schemas.result import GenericResult
+from services.user_role import BaseUserRoleService
 
 # --- Response schemas ---
 from pydantic import BaseModel
@@ -155,25 +156,25 @@ async def change_phone(
     return SuccessMessage()
 
 @router.put("/{user_id}/role/{role_id}", response_model=SuccessMessage, tags=["Users"], summary="Add role to user")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+# @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def add_role_to_user(
     user_id: UUID = Path(...),
     role_id: UUID = Path(...),
-    user_service: BaseUserService = Depends(),
+    user_role_service: BaseUserRoleService = Depends(),
     auth_service: BaseAuthService = Depends(),
 ):
-    # await user_service.add_role(user_id=user_id, role_id=role_id)
+    await user_role_service.assign_role_to_user(user_id=user_id, role_id=role_id)
     return SuccessMessage()
 
 @router.delete("/{user_id}/role/{role_id}", response_model=SuccessMessage, tags=["Users"], summary="Remove role from user")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+# @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def remove_role_from_user(
     user_id: UUID = Path(...),
     role_id: UUID = Path(...),
-    user_service: BaseUserService = Depends(),
+    user_role_service: BaseUserRoleService = Depends(),
     auth_service: BaseAuthService = Depends(),
 ):
-    # await user_service.remove_role(user_id=user_id, role_id=role_id)
+    await user_role_service.remove_role_from_user(user_id=user_id, role_id=role_id)
     return SuccessMessage()
 
 @router.delete("/{user_id}", response_model=SuccessMessage, tags=["Users"], summary="Delete user by ID")
