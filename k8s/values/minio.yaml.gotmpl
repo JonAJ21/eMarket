@@ -1,0 +1,27 @@
+mode: standalone
+
+auth:
+  rootUser: {{ .Environment.Values.minioRootUser }}
+  rootPassword: {{ .Environment.Values.minioRootPassword }}
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+service:
+  type: ClusterIP
+
+console:
+  enabled: true
+  ingress:
+    enabled: true
+    hostname: minio.local
+    ingressClassName: nginx
+    path: /
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
