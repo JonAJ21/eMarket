@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from redis.asyncio.client import Redis
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from dependencies.main import setup_dependencies
 from db import redis
@@ -42,5 +43,7 @@ def create_app() -> FastAPI:
     
     setup_dependencies(app)
     
+    # Prometheus metrics
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
     
     return app

@@ -7,6 +7,14 @@ from services.auth import BaseAuthService, require_roles
 from schemas.role import Roles
 from dependencies.services.seller_service_factory import get_seller_service
 from services.seller import BaseSellerService
+from prometheus_client import Counter
+
+# Prometheus counters for market actions
+market_create_counter = Counter('market_create_total', 'Total number of markets created')
+market_update_counter = Counter('market_update_total', 'Total number of markets updated')
+market_delete_counter = Counter('market_delete_total', 'Total number of markets deleted')
+market_verify_counter = Counter('market_verify_total', 'Total number of markets verified')
+market_list_counter = Counter('market_list_total', 'Total number of market list requests')
 
 class SellerInfoResponse(BaseModel):
     user_id: UUID
@@ -42,6 +50,7 @@ async def create_store(
         seller = await seller_service.create_store(user_id=user.id, dto=dto)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    market_create_counter.inc()
     return SellerInfoResponse.from_orm(seller)
 
 # 2. Update information about the store (your own)
@@ -53,6 +62,7 @@ async def update_store(
 ):
     user = await auth_service.get_user()
     seller = await seller_service.update_store(user_id=user.id, dto=dto)
+    market_update_counter.inc()
     return SellerInfoResponse.from_orm(seller)
 
 # 3. Delete the store (your own)
@@ -63,6 +73,7 @@ async def delete_store(
 ):
     user = await auth_service.get_user()
     await seller_service.delete_store(user_id=user.id)
+    market_delete_counter.inc()
     return SuccessMessage()
 
 # 4. View information about the store (your own)
@@ -85,6 +96,7 @@ async def list_verified_stores(
     seller_service: BaseSellerService = Depends(get_seller_service),
 ):
     sellers = await seller_service.list_verified_stores(skip=skip, limit=limit)
+    market_list_counter.inc()
     return [SellerInfoResponse.from_orm(s) for s in sellers]
 
 # 6. Get information about the store's market_id
@@ -108,6 +120,7 @@ async def list_unverified_stores(
     auth_service: BaseAuthService = Depends(),
 ):
     sellers = await seller_service.list_unverified_stores(skip=skip, limit=limit)
+    market_list_counter.inc()
     return [SellerInfoResponse.from_orm(s) for s in sellers]
 
 # 8. Verify the store
@@ -119,4 +132,5 @@ async def verify_store(
     auth_service: BaseAuthService = Depends(),
 ):
     await seller_service.verify_store(market_id)
+    market_verify_counter.inc()
     return SuccessMessage() 
