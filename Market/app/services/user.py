@@ -4,6 +4,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from faker import Faker
+from bcrypt import hashpw, gensalt
 
 from models.social_account import SocialAccount
 from repositories.user import BaseUserRepository
@@ -177,22 +178,91 @@ class UserService(BaseUserService):
         await self._uow.commit()
 
     async def get_user_by_id(self, user_id: UUID) -> Optional[UserResponse]:
-        # TODO: Implement DB logic
-        pass
+        user = await self._repository.get(id=user_id)
+        if not user:
+            return None
+
+        full_name = ' '.join(filter(None, [user.first_name, user.last_name, user.fathers_name])) or None
+
+        role_id = user.roles[0].id if user.roles else None
+        return UserResponse(
+            id=user.id,
+            email=user.email,
+            full_name=full_name,
+            is_active=user.is_active,
+            role_id=role_id,
+            created_at=user.created_at,
+            updated_at=user.updated_at
+        )
 
     async def list_users(self, skip: int, limit: int) -> UserListResponse:
-        # TODO: Implement DB logic
-        pass
+
+        users = await self._repository.gets(skip=skip, limit=limit)
+        total = len(users) 
+        user_responses = []
+        for user in users:
+            full_name = ' '.join(filter(None, [user.first_name, user.last_name, user.fathers_name])) or None
+            role_id = user.roles[0].id if user.roles else None
+            user_responses.append(UserResponse(
+                id=user.id,
+                email=user.email,
+                full_name=full_name,
+                is_active=user.is_active,
+                role_id=role_id,
+                created_at=user.created_at,
+                updated_at=user.updated_at
+            ))
+        return UserListResponse(users=user_responses, total=total)
 
     async def update_user(self, user_id: UUID, dto: UserUpdateDTO) -> UserResponse:
-        # TODO: Implement DB logic
-        pass
+        user = await self._repository.get(id=user_id)
+        if not user:
+            raise ValueError("User not found")
+        if dto.full_name:
+
+            parts = dto.full_name.split()
+            user.first_name = parts[0] if len(parts) > 0 else None
+            user.last_name = parts[1] if len(parts) > 1 else None
+            user.fathers_name = parts[2] if len(parts) > 2 else None
+        if dto.email:
+            user.email = dto.email
+        if dto.password:
+            user.password = hashpw(dto.password.encode(), gensalt()).decode()
+        await self._uow.commit()
+        full_name = ' '.join(filter(None, [user.first_name, user.last_name, user.fathers_name])) or None
+        role_id = user.roles[0].id if user.roles else None
+        return UserResponse(
+            id=user.id,
+            email=user.email,
+            full_name=full_name,
+            is_active=user.is_active,
+            role_id=role_id,
+            created_at=user.created_at,
+            updated_at=user.updated_at
+        )
 
     async def assign_role(self, user_id: UUID, role_id: UUID) -> None:
-        # TODO: Implement DB logic
-        pass
+
+        user = await self._repository.get(id=user_id)
+        if not user:
+            raise ValueError("User not found")
+        from models.role import Role
+        from sqlalchemy import select
+        result = await self._session.execute(select(Role).where(Role.id == role_id))
+        role = result.scalar_one_or_none()
+        if not role:
+            raise ValueError("Role not found")
+        user.assign_role(role)
+        await self._uow.commit()
 
     async def get_user_history(self, user_id: UUID) -> List[UserHistoryResponse]:
-        # TODO: Implement DB logic
-        pass
+        history = await self._repository.get_user_history(user_id=user_id)
+        responses = []
+        for h in history:
+            responses.append(UserHistoryResponse(
+                action="login",  # Or whatever action is appropriate
+                timestamp=getattr(h, 'attemted_at', None),
+                details=h.user_agent
+            ))
+        return responses
         
