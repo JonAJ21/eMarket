@@ -52,11 +52,11 @@ async def get_profile_history(
     history = await user_service.get_user_history(user_id=user.id, skip=skip, limit=limit)
     return [
         UserHistoryResponse(
-            user_id=h.user_id,
-            user_agent=h.user_agent,
-            user_device_type=str(h.user_device_type) if h.user_device_type else None,
-            attempted_at=h.attempted_at,
-            is_success=h.is_success
+            user_id=getattr(h, "user_id", user.id),
+            user_agent=getattr(h, "user_agent", None),
+            user_device_type=str(getattr(h, "user_device_type", None)) if getattr(h, "user_device_type", None) else None,
+            attempted_at=getattr(h, "attempted_at", None),
+            is_success=getattr(h, "is_success", None)
         ) for h in history
     ]
 
@@ -127,11 +127,11 @@ async def get_user_history(
     history = await user_service.get_user_history(user_id=user_id, skip=skip, limit=limit)
     return [
         UserHistoryResponse(
-            user_id=h.user_id,
-            user_agent=h.user_agent,
-            user_device_type=str(h.user_device_type) if h.user_device_type else None,
-            attempted_at=h.attempted_at,
-            is_success=h.is_success
+            user_id=getattr(h, "user_id", user_id),
+            user_agent=getattr(h, "user_agent", None),
+            user_device_type=str(getattr(h, "user_device_type", None)) if getattr(h, "user_device_type", None) else None,
+            attempted_at=getattr(h, "attempted_at", None),
+            is_success=getattr(h, "is_success", None)
         ) for h in history
     ]
 
