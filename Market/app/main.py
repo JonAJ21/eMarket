@@ -4,12 +4,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio.client import Redis
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import make_asgi_app
 from db.mongodb import MongoDB
 from dependencies.main import setup_dependencies
 from db import redis
 from core.config import settings
 from api.v1.accounts import router as accounts_router
 from api.v1.users import router as users_router
+from api.v1 import products, categories, reviews, cart
+from metrics.middleware import PrometheusMiddleware
+from metrics.decorators import product_rating
+from services.review_service import ReviewService
 
 
 @asynccontextmanager
@@ -49,8 +54,18 @@ def create_app() -> FastAPI:
     app.include_router(accounts_router, prefix="/accounts")
     app.include_router(users_router, prefix="/users")
     
-    # Импортируем роутеры здесь, после инициализации MongoDB
-    from api.v1 import products, categories, reviews, cart
+    # Добавляем middleware для метрик
+    app.add_middleware(PrometheusMiddleware)
+    
+    # Инициализация метрик рейтинга товаров
+    async def init_product_ratings():
+        review_service = ReviewService()
+        # Получаем все продукты
+        products = await review_service.product_repo.get_all()
+        # Для каждого продукта получаем и устанавливаем рейтинг
+        for product in products:
+            rating = await review_service.get_product_rating(str(product.id))
+            product_rating.labels(product_id=str(product.id)).set(rating)
     
     # Подключение роутеров
     app.include_router(products.router, prefix="/api/v1/products", tags=["products"])
@@ -59,6 +74,15 @@ def create_app() -> FastAPI:
     app.include_router(cart.router, prefix="/api/v1/cart", tags=["cart"])
     
     setup_dependencies(app)
+
+    # Добавляем эндпоинт для метрик Prometheus
+    metrics_app = make_asgi_app()
+    app.mount("/metrics", metrics_app)
+
+    # Инициализируем метрики при старте
+    @app.on_event("startup")
+    async def startup_event():
+        await init_product_ratings()
 
     @app.get("/")
     async def root():
