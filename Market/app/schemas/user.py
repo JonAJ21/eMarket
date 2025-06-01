@@ -54,9 +54,13 @@ class UserUpdateDTO(BaseModel):
     password: Optional[str]
 
 class UserHistoryResponse(BaseModel):
-    action: str
-    timestamp: datetime
-    details: Optional[str]
+    user_agent: Optional[str]
+    user_device_type: Optional[str]
+    attempted_at: datetime
+    is_success: bool
+
+    class Config:
+        orm_mode = True
 
 class UserListResponse(BaseModel):
     users: List[UserResponse]

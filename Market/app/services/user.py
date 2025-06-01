@@ -72,7 +72,7 @@ class BaseUserService(ABC):
     async def assign_role(self, user_id: UUID, role_id: UUID) -> None: ...
 
     @abstractmethod
-    async def get_user_history(self, user_id: UUID) -> List[UserHistoryResponse]: ...
+    async def get_user_history(self, user_id: UUID, skip: int = 0, limit: int = 100) -> List[UserHistoryResponse]: ...
 
 
 class UserService(BaseUserService):
@@ -219,7 +219,6 @@ class UserService(BaseUserService):
         if not user:
             raise ValueError("User not found")
         if dto.full_name:
-
             parts = dto.full_name.split()
             user.first_name = parts[0] if len(parts) > 0 else None
             user.last_name = parts[1] if len(parts) > 1 else None
@@ -229,6 +228,7 @@ class UserService(BaseUserService):
         if dto.password:
             user.password = hashpw(dto.password.encode(), gensalt()).decode()
         await self._uow.commit()
+        user = await self._repository.get(id=user_id)
         full_name = ' '.join(filter(None, [user.first_name, user.last_name, user.fathers_name])) or None
         role_id = user.roles[0].id if user.roles else None
         return UserResponse(
@@ -255,14 +255,14 @@ class UserService(BaseUserService):
         user.assign_role(role)
         await self._uow.commit()
 
-    async def get_user_history(self, user_id: UUID) -> List[UserHistoryResponse]:
-        history = await self._repository.get_user_history(user_id=user_id)
-        responses = []
-        for h in history:
-            responses.append(UserHistoryResponse(
-                action="login",  # Or whatever action is appropriate
-                timestamp=getattr(h, 'attemted_at', None),
-                details=h.user_agent
-            ))
-        return responses
+    async def get_user_history(self, user_id: UUID, skip: int = 0, limit: int = 100) -> List[UserHistoryResponse]:
+        user_history = await self._repository.get_user_history(user_id=user_id, skip=skip, limit=limit)
+        return [
+            UserHistoryResponse(
+                user_agent=h.user_agent,
+                user_device_type=str(h.user_device_type) if h.user_device_type else None,
+                attempted_at=h.attemted_at,
+                is_success=h.is_success
+            ) for h in user_history
+        ]
         

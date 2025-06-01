@@ -11,7 +11,7 @@ from schemas.result import GenericResult
 from services.user_role import BaseUserRoleService
 from dependencies.services.user_service_factory import get_user_service
 
-# --- Response schemas ---
+
 from pydantic import BaseModel
 
 class UserDetail(BaseModel):
@@ -35,11 +35,57 @@ class UserHistoryResponse(BaseModel):
 class SuccessMessage(BaseModel):
     message: str = "Success"
 
-# --- Endpoints ---
+
 
 router = APIRouter(
     tags=['Users'],    
 )
+
+@router.get("/profile/history", response_model=List[UserHistoryResponse], tags=["Users"], summary="Get active user history", description="Get history of the active user")
+async def get_profile_history(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1),
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(),
+):
+    user = await auth_service.get_user()
+    history = await user_service.get_user_history(user_id=user.id, skip=skip, limit=limit)
+    return [
+        UserHistoryResponse(
+            user_id=h.user_id,
+            user_agent=h.user_agent,
+            user_device_type=str(h.user_device_type) if h.user_device_type else None,
+            attempted_at=h.attempted_at,
+            is_success=h.is_success
+        ) for h in history
+    ]
+
+@router.get("/profile", response_model=UserResponse, tags=["Users"], summary="Get active user profile", description="Get information about the active user")
+async def get_profile(
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(),
+):
+    user = await auth_service.get_user()
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        full_name=f"{user.first_name or ''} {user.last_name or ''}".strip(),
+        is_active=user.is_active,
+        role_id=user.roles[0].id if user.roles else None,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
+
+@router.get("/me", response_model=UserResponse, summary="Get your profile")
+async def get_own_profile(
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(get_user_service),
+):
+    user = await auth_service.get_user()
+    result = await user_service.get_user_by_id(user.id)
+    if not result:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result
 
 @router.get(
     "/",
@@ -69,14 +115,6 @@ async def get_user_by_id(
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-@router.get("/profile", response_model=UserDetail, tags=["Users"], summary="Get active user profile", description="Get information about the active user")
-async def get_profile(
-    auth_service: BaseAuthService = Depends(),
-    user_service: BaseUserService = Depends(),
-):
-    user = await auth_service.get_user()
-    return user
-
 @router.get("/{user_id}/history", response_model=List[UserHistoryResponse], tags=["Users"], summary="Get user history", description="Get history of user visits by user_id")
 @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def get_user_history(
@@ -86,17 +124,16 @@ async def get_user_history(
     user_service: BaseUserService = Depends(),
     auth_service: BaseAuthService = Depends(),
 ):
-    return await user_service.get_user_history(user_id=user_id, skip=skip, limit=limit)
-
-@router.get("/profile/history", response_model=List[UserHistoryResponse], tags=["Users"], summary="Get active user history", description="Get history of the active user")
-async def get_profile_history(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1),
-    auth_service: BaseAuthService = Depends(),
-    user_service: BaseUserService = Depends(),
-):
-    user = await auth_service.get_user()
-    return await user_service.get_user_history(user_id=user.id, skip=skip, limit=limit)
+    history = await user_service.get_user_history(user_id=user_id, skip=skip, limit=limit)
+    return [
+        UserHistoryResponse(
+            user_id=h.user_id,
+            user_agent=h.user_agent,
+            user_device_type=str(h.user_device_type) if h.user_device_type else None,
+            attempted_at=h.attempted_at,
+            is_success=h.is_success
+        ) for h in history
+    ]
 
 @router.put("/profile/login", response_model=SuccessMessage, tags=["Users"], summary="Change login")
 async def change_login(
@@ -105,8 +142,7 @@ async def change_login(
     user_service: BaseUserService = Depends(),
 ):
     user = await auth_service.get_user()
-    # Implement logic to change login
-    # await user_service.change_login(user_id=user.id, login=login)
+
     return SuccessMessage()
 
 @router.put("/profile/password", response_model=SuccessMessage, tags=["Users"], summary="Change password")
@@ -128,8 +164,7 @@ async def change_email(
     user_service: BaseUserService = Depends(),
 ):
     user = await auth_service.get_user()
-    # Implement logic to change email
-    # await user_service.change_email(user_id=user.id, email=email)
+
     return SuccessMessage()
 
 @router.put("/profile/name", response_model=SuccessMessage, tags=["Users"], summary="Change full name")
@@ -152,12 +187,11 @@ async def change_phone(
     user_service: BaseUserService = Depends(),
 ):
     user = await auth_service.get_user()
-    # Implement logic to change phone
-    # await user_service.change_phone(user_id=user.id, phone=phone)
+
     return SuccessMessage()
 
 @router.put("/{user_id}/role/{role_id}", response_model=SuccessMessage, tags=["Users"], summary="Add role to user")
-# @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def add_role_to_user(
     user_id: UUID = Path(...),
     role_id: UUID = Path(...),
@@ -168,7 +202,7 @@ async def add_role_to_user(
     return SuccessMessage()
 
 @router.delete("/{user_id}/role/{role_id}", response_model=SuccessMessage, tags=["Users"], summary="Remove role from user")
-# @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def remove_role_from_user(
     user_id: UUID = Path(...),
     role_id: UUID = Path(...),
@@ -195,30 +229,18 @@ async def delete_profile(
     user_service: BaseUserService = Depends(),
 ):
     user = await auth_service.get_user()
-    # Implement logic to check password and delete user
-    # await user_service.delete_user(user_id=user.id)
+
     return SuccessMessage()
 
-@router.get("/me", response_model=UserResponse, summary="Get your profile")
-async def get_own_profile(
-    auth_service: BaseAuthService = Depends(),
-    user_service: BaseUserService = Depends(get_user_service),
-):
-    user = await auth_service.get_user()
-    result = await user_service.get_user_by_id(user.id)
-    if not result:
-        raise HTTPException(status_code=404, detail="User not found")
-    return result
-
-@router.put("/me", response_model=UserResponse, summary="Update your profile")
-async def update_own_profile(
+@router.put("/{user_id}", response_model=UserResponse, summary="Update user by ID")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def update_user_by_id(
+    user_id: UUID = Path(...),
     dto: UserUpdateDTO = Body(...),
-    auth_service: BaseAuthService = Depends(),
     user_service: BaseUserService = Depends(get_user_service),
+    auth_service: BaseAuthService = Depends(),
 ):
-    user = await auth_service.get_user()
-    result = await user_service.update_user(user.id, dto)
-    return result
+    return await user_service.update_user(user_id, dto)
 
 @router.get("/", response_model=UserListResponse, summary="List users")
 @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])

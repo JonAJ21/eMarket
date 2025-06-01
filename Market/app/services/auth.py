@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from functools import wraps
 from time import time
 from typing import Any
+from enum import Enum
 
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import JWTDecodeError, MissingTokenError
@@ -186,7 +187,8 @@ class JWTAuthService(BaseAuthService):
         user_id = decoded["sub"]
         return await self._user_service.get_user(user_id=user_id)
     
-def require_roles(roles: list[str]):
+def require_roles(roles: list[str | Enum]):
+    role_names = [r.value if isinstance(r, Enum) else r for r in roles]
     def auth_decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -197,14 +199,12 @@ def require_roles(roles: list[str]):
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
                 )
             for role in current_user.roles:
-                if role.name in roles:
+                if role.name in role_names:
                     return await func(*args, **kwargs)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="User have not access"
             )
-
         return wrapper
-
     return auth_decorator 
         
     

@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio.client import Redis
 from prometheus_fastapi_instrumentator import Instrumentator
+from metrics import update_total_users
+from db.postgres import async_session
 
 from dependencies.main import setup_dependencies
 from db import redis
@@ -43,7 +45,17 @@ def create_app() -> FastAPI:
     
     setup_dependencies(app)
     
-    # Prometheus metrics
+
     Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+    async def periodic_user_count_update():
+        while True:
+            async with async_session() as session:
+                await update_total_users(session)
+            await asyncio.sleep(30)
+
+    @app.on_event("startup")
+    async def start_metrics_updater():
+        asyncio.create_task(periodic_user_count_update())
     
     return app

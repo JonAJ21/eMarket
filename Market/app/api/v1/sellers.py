@@ -76,6 +76,19 @@ async def delete_store(
     market_delete_counter.inc()
     return SuccessMessage()
 
+# 7. Get information about the limit of unconfirmed stores starting with skip
+@router.get("/unverified", response_model=List[SellerInfoResponse], summary="List unverified stores", description="Get information about the limit of unconfirmed stores starting with skip")
+@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
+async def list_unverified_stores(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1),
+    seller_service: BaseSellerService = Depends(get_seller_service),
+    auth_service: BaseAuthService = Depends(),
+):
+    sellers = await seller_service.list_unverified_stores(skip=skip, limit=limit)
+    market_list_counter.inc()
+    return [SellerInfoResponse.from_orm(s) for s in sellers]
+
 # 4. View information about the store (your own)
 @router.get("/profile", response_model=SellerInfoResponse, summary="View your store", description="View information about the store (your own)")
 async def get_own_store(
@@ -88,17 +101,6 @@ async def get_own_store(
         raise HTTPException(status_code=404, detail="Store not found")
     return SellerInfoResponse.from_orm(seller)
 
-# 5. Get information about the limit of stores confirmed by the administration, starting with skip
-@router.get("/", response_model=List[SellerInfoResponse], summary="List verified stores", description="Get information about the limit of stores confirmed by the administration, starting with skip")
-async def list_verified_stores(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1),
-    seller_service: BaseSellerService = Depends(get_seller_service),
-):
-    sellers = await seller_service.list_verified_stores(skip=skip, limit=limit)
-    market_list_counter.inc()
-    return [SellerInfoResponse.from_orm(s) for s in sellers]
-
 # 6. Get information about the store's market_id
 @router.get("/{market_id}", response_model=SellerInfoResponse, summary="Get store by ID", description="Get information about the store's market_id")
 async def get_store_by_id(
@@ -110,16 +112,14 @@ async def get_store_by_id(
         raise HTTPException(status_code=404, detail="Store not found")
     return SellerInfoResponse.from_orm(seller)
 
-# 7. Get information about the limit of unconfirmed stores starting with skip
-@router.get("/unverified", response_model=List[SellerInfoResponse], summary="List unverified stores", description="Get information about the limit of unconfirmed stores starting with skip")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
-async def list_unverified_stores(
+# 5. Get information about the limit of stores confirmed by the administration, starting with skip
+@router.get("/", response_model=List[SellerInfoResponse], summary="List verified stores", description="Get information about the limit of stores confirmed by the administration, starting with skip")
+async def list_verified_stores(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1),
     seller_service: BaseSellerService = Depends(get_seller_service),
-    auth_service: BaseAuthService = Depends(),
 ):
-    sellers = await seller_service.list_unverified_stores(skip=skip, limit=limit)
+    sellers = await seller_service.list_verified_stores(skip=skip, limit=limit)
     market_list_counter.inc()
     return [SellerInfoResponse.from_orm(s) for s in sellers]
 

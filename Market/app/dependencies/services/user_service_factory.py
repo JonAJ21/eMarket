@@ -28,5 +28,12 @@ def create_user_service(
     )
     return UserService(repository=cached_repository, uow=unit_of_work, session=session)
 
-def get_user_service(session: AsyncSession = Depends(get_session)) -> BaseUserService:
-    return UserService(session=session)
+def get_user_service(session: AsyncSession = Depends(get_session), redis: Redis = Depends(get_redis)) -> BaseUserService:
+    from models.user import User
+    from repositories.user import CachedUserPostgreRepository
+    from services.cache import RedisCacheService
+    from services.uow import SQLAlchemyUnitOfWork
+    cache_service = RedisCacheService(client=redis, model=User)
+    cached_repository = CachedUserPostgreRepository(session=session, cache_service=cache_service)
+    unit_of_work = SQLAlchemyUnitOfWork(session=session)
+    return UserService(repository=cached_repository, uow=unit_of_work, session=session)
