@@ -1,6 +1,7 @@
 from typing import List, Optional
 from bson import ObjectId
 from models.review import Review
+from schemas.review import ReviewCreate
 from repositories.review_repository import ReviewRepository
 from repositories.product_repository import ProductRepository
 
@@ -9,12 +10,20 @@ class ReviewService:
         self.review_repo = ReviewRepository()
         self.product_repo = ProductRepository()
 
-    async def create_review(self, review: Review) -> Review:
+    async def create_review(self, review: ReviewCreate) -> Review:
         # Проверяем существование товара
         product = await self.product_repo.get_by_id(str(review.product_id))
         if not product:
             raise ValueError("Product not found")
-        return await self.review_repo.create(review)
+        
+        # Создаем модель Review из схемы ReviewCreate
+        review_model = Review(
+            product_id=review.product_id,
+            user_id=review.user_id,
+            rating=review.rating,
+            comment=review.comment
+        )
+        return await self.review_repo.create(review_model)
 
     async def get_review(self, review_id: str) -> Optional[Review]:
         return await self.review_repo.get_by_id(review_id)

@@ -16,6 +16,11 @@ class CartItemUpdate(BaseModel):
 class CartItemInDB(CartItemBase):
     pass
 
+class CartItemResponse(CartItemInDB):
+    product_name: str
+    product_price: float
+    total_price: float
+
 class CartBase(BaseModel):
     user_id: str
     items: List[CartItemInDB] = []
@@ -39,8 +44,3 @@ class CartInDB(CartBase):
 
 class CartResponse(CartInDB):
     pass
-
-class CartItemResponse(CartItemInDB):
-    product_name: str
-    product_price: float
-    total_price: float 
