@@ -18,7 +18,7 @@ services:
     depends_on:
       - postgres_database
       - redis_database
-
+  
   postgres_database:
     container_name: postgres_database
     image: postgres:17.2
@@ -47,10 +47,119 @@ services:
     restart: always
     networks:
       - backend
+    
+  mongodb_database:
+    container_name: mongodb_database
+    image: mongo:latest
+    environment:
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME}
+    ports:
+      - "${MONGODB_PORT}:27017"
+    volumes:
+      - .mongodb:/data/db
+    restart: always
+    networks:
+      - backend
+
+  clickhouse_database:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface for queries
+      - "9000:9000"  # Native TCP interface
+      - "9009:9009"  # For replication (optional)
+    volumes:
+      - ./Clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - .clickhouse:/var/lib/clickhouse
+      - ./Clickhouse/ddl.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+    networks:
+      - backend
+
+  kafka:
+    container_name: kafka
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck: 
+      test: nc -z localhost 29092  
+    networks:
+      - backend
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui
+    ports:
+      - 8090:8080
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    networks:
+      - backend
+
+  test_data_generator:
+    container_name: test_data_generator
+    build:
+      context: ./TestDataGeneration
+      dockerfile: Dockerfile
+    volumes:
+      - ./TestDataGeneration/app:/app
+    env_file:
+      - ".env"
+    networks:
+      - backend
+    depends_on:
+      - postgres_database
+      - mongodb_database
+      - zookeeper
+      - kafka
+
+  streaming_processing:
+    container_name: streaming_processing
+    build:
+      context: ./StreamingProcessing
+      dockerfile: Dockerfile
+    volumes:
+      - ./StreamingProcessing/app:/app
+    env_file:
+      - ".env"
+    networks:
+      - backend
+    restart: always
+    depends_on:
+      - zookeeper
+      - kafka
+      - clickhouse_database
 
   
-    
+
 networks: 
   backend:
     driver: bridge
+
+
+
+
+
 

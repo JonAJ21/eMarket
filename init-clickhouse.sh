@@ -1,10 +1,10 @@
 #!/bin/bash
 
-HOST="localhost"
-PORT="9000"
-USER="admin"
-PASSWORD="admin" #
-DATABASE="default"
+HOST=""
+PORT=""
+USER=""
+PASSWORD=""
+DATABASE=""
 
 while getopts ":h:P:u:p:d:" opt; do
   case $opt in
@@ -31,19 +31,15 @@ if [ ! -f "$SQL_FILE" ]; then
   exit 1
 fi
 
-# Формируем команду
 CMD="clickhouse-client --host $HOST --port $PORT --user $USER --database $DATABASE --multiline --multiquery"
 
-# Добавляем пароль если указан
 if [ -n "$PASSWORD" ]; then
   CMD="$CMD --password $PASSWORD"
 fi
 
-# Выполняем скрипт
 echo "Выполняю $SQL_FILE в ClickHouse ($HOST:$PORT)"
 $CMD < "$SQL_FILE"
 
-# Проверяем результат
 if [ $? -eq 0 ]; then
   echo "Скрипт успешно выполнен"
 else

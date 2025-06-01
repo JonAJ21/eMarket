@@ -1,0 +1,12 @@
+apache-airflow
+
+aiochclient
+
+psycopg2-binary
+pymongo
+
+pandas
+numpy
+
+requests
+aiohttp
