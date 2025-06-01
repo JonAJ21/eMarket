@@ -10,7 +10,7 @@ postgresql:
 dags:
   gitSync:
     enabled: true              
-    repo: "https://github.com/JonAJ21/airflow_dags.git" 
+    repo: {{ .Environment.Values.dagsURL }}
     branch: "main"              
-    subPath: "dags"              
+    subPath: {{ .Environment.Values.dagsSubPath }}           
     wait: 60                   

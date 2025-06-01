@@ -14,10 +14,15 @@ build:
 deploy:
   kubectl:
     manifests:
-      - k8s/apps/eMarket/deployment.yaml
-      - k8s/apps/eMarket/service.yaml
-      - k8s/apps/eMarket/secrets.yaml
-      
+      - k8s/apps/Market/deployment.yaml
+      - k8s/apps/Market/service.yaml
+      - k8s/apps/Market/secrets.yaml
+      - k8s/apps/TestDataGeneration/deployment.yaml
+      - k8s/apps/TestDataGeneration/secrets.yaml
+      - k8s/apps/StreamingProcessing/deployment.yaml
+      - k8s/apps/StreamingProcessing/secrets.yaml
+
+ 
 portForward:
   - resourceType: deployment
     resourceName: emarket

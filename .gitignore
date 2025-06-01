@@ -25,3 +25,5 @@ data/
 
 # Kubernetes envs
 environments/
+
+*secrets.yaml

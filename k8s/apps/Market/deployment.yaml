@@ -17,9 +17,6 @@ spec:
           image: emarket  
           ports:
             - containerPort: 8000
-          env:
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: emarket-secrets
-                  key: DB_USERNAME
+          envFrom:
+            - secretRef:
+                name: emarket-secrets
