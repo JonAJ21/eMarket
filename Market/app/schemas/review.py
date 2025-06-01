@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field, conint, ConfigDict
 from datetime import datetime
-from bson import ObjectId
+from uuid import uuid4
 
 class ReviewBase(BaseModel):
     product_id: str
@@ -17,12 +17,11 @@ class ReviewUpdate(BaseModel):
     comment: Optional[str] = Field(None, min_length=1, max_length=1000)
 
 class ReviewInDB(ReviewBase):
-    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: str = Field(default_factory=lambda: str(uuid4()), alias="_id")
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(
-        json_encoders={ObjectId: str},
         populate_by_name=True,
         arbitrary_types_allowed=True
     )

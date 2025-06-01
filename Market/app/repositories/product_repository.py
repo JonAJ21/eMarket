@@ -1,5 +1,4 @@
 from typing import List, Optional
-from bson import ObjectId
 from schemas.product import ProductInDB
 from db.mongodb import BaseRepository
 

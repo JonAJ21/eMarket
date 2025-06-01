@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, conint, ConfigDict
 from datetime import datetime
-from bson import ObjectId
+from uuid import uuid4
 
 class CartItemBase(BaseModel):
     product_id: str
@@ -11,7 +11,7 @@ class CartItemCreate(CartItemBase):
     pass
 
 class CartItemUpdate(BaseModel):
-    quantity: conint(gt=0)
+    quantity: Optional[conint(gt=0)] = None
 
 class CartItemInDB(CartItemBase):
     pass
@@ -29,15 +29,14 @@ class CartCreate(CartBase):
     pass
 
 class CartUpdate(BaseModel):
-    items: List[CartItemInDB]
+    items: Optional[List[CartItemInDB]] = None
 
 class CartInDB(CartBase):
-    id: str = Field(default_factory=lambda: str(ObjectId()), alias="_id")
+    id: str = Field(default_factory=lambda: str(uuid4()), alias="_id")
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(
-        json_encoders={ObjectId: str},
         populate_by_name=True,
         arbitrary_types_allowed=True
     )

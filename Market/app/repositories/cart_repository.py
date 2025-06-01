@@ -1,5 +1,4 @@
 from typing import List, Optional
-from bson import ObjectId
 from models.cart import Cart, CartItem
 from db.mongodb import BaseRepository
 from metrics.decorators import cart_items_count

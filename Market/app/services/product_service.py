@@ -35,6 +35,8 @@ class ProductService:
             price=product.price,
             category_id=product.category_id,
             stock=product.stock,
+            images=product.images,
+            seller_id=product.seller_id,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )

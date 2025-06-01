@@ -1,7 +1,6 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from typing import Optional, Type, TypeVar, Generic
 from pydantic import BaseModel
-from bson import ObjectId
 from datetime import datetime
 from core.config import settings
 from metrics.decorators import cart_items_count
@@ -39,7 +38,6 @@ class BaseRepository(Generic[T]):
     async def create(self, item: T) -> T:
         item_dict = item.model_dump(by_alias=True)
         result = await self.collection.insert_one(item_dict)
-        item_dict["_id"] = str(result.inserted_id)
         if self.collection_name == "carts":
             cart_items_count.labels(user_id=item.user_id).set(len(item.items))
         return self.model_class(**item_dict)
@@ -47,13 +45,13 @@ class BaseRepository(Generic[T]):
     async def get_by_id(self, item_id: str) -> Optional[T]:
         item = await self.collection.find_one({"_id": item_id})
         if item:
-            item["_id"] = str(item["_id"])
-            if "_id" in item and isinstance(item["_id"], ObjectId):
-                item["_id"] = str(item["_id"])
             if "created_at" not in item:
                 item["created_at"] = datetime.utcnow()
             if "updated_at" not in item:
                 item["updated_at"] = datetime.utcnow()
+            # Преобразуем _id в строку, если это ObjectId
+            if "_id" in item and not isinstance(item["_id"], str):
+                item["_id"] = str(item["_id"])
         return self.model_class(**item) if item else None
 
     async def update(self, item_id: str, item: T) -> Optional[T]:
@@ -76,12 +74,15 @@ class BaseRepository(Generic[T]):
         cursor = self.collection.find().skip(skip).limit(limit)
         items = await cursor.to_list(length=limit)
         for item in items:
-            if "_id" in item and isinstance(item["_id"], ObjectId):
-                item["_id"] = str(item["_id"])
             if "created_at" not in item:
                 item["created_at"] = datetime.utcnow()
             if "updated_at" not in item:
                 item["updated_at"] = datetime.utcnow()
+            if "seller_id" not in item:
+                item["seller_id"] = "default_seller"
+            # Преобразуем _id в строку, если это ObjectId
+            if "_id" in item and not isinstance(item["_id"], str):
+                item["_id"] = str(item["_id"])
         return [self.model_class(**item) for item in items]
 
 mongodb = MongoDB() 

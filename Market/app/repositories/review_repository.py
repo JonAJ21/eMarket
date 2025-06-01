@@ -1,5 +1,4 @@
 from typing import List, Optional
-from bson import ObjectId
 from schemas.review import ReviewInDB
 from db.mongodb import BaseRepository
 
