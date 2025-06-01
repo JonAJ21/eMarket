@@ -31,7 +31,7 @@ class CartRepository(BaseRepository[Cart]):
         if not cart:
             return None
 
-        cart.items = [item for item in cart.items if item.product_id != product_id]
+        cart.items = [item for item in cart.items if str(item.product_id) != product_id]
         return await self.update(str(cart.id), cart)
 
     async def update_item_quantity(self, user_id: str, product_id: str, quantity: int) -> Optional[Cart]:
@@ -40,7 +40,7 @@ class CartRepository(BaseRepository[Cart]):
             return None
 
         for item in cart.items:
-            if item.product_id == product_id:
+            if str(item.product_id) == product_id:
                 item.quantity = quantity
                 return await self.update(str(cart.id), cart)
 

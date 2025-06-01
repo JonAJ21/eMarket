@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from redis.asyncio.client import Redis
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import make_asgi_app
 from db.mongodb import MongoDB
 from dependencies.main import setup_dependencies
 from db import redis
@@ -59,6 +60,10 @@ def create_app() -> FastAPI:
     app.include_router(cart.router, prefix="/api/v1/cart", tags=["cart"])
     
     setup_dependencies(app)
+
+    # Добавляем эндпоинт для метрик Prometheus
+    metrics_app = make_asgi_app()
+    app.mount("/metrics", metrics_app)
 
     @app.get("/")
     async def root():

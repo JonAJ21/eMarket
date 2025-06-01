@@ -20,7 +20,7 @@ class CartService:
         if product.stock < quantity:
             raise ValueError("Not enough stock")
 
-        item = CartItem(product_id=ObjectId(product_id), quantity=quantity)
+        item = CartItem(product_id=product_id, quantity=quantity)
         return await self.cart_repo.add_item(user_id, item)
 
     async def remove_from_cart(self, user_id: str, product_id: str) -> Optional[Cart]:
