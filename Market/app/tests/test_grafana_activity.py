@@ -22,6 +22,7 @@ class ActivityGenerator:
         self.category_ids: List[str] = []
         self.product_ids: List[str] = []
         self.user_ids: List[str] = [f"test_user_{i}" for i in range(1, 21)]  # 20 тестовых пользователей
+        self.seller_ids: List[str] = [f"test_seller_{i}" for i in range(1, 11)]  # 10 тестовых продавцов
         self.lock = threading.Lock()
         
     def generate_categories(self) -> List[str]:
@@ -59,7 +60,8 @@ class ActivityGenerator:
             "price": round(random.uniform(10.0, 2000.0), 2),
             "stock": random.randint(1, 100),
             "category_id": category_id,
-            "images": [fake.image_url() for _ in range(random.randint(1, 3))]
+            "images": [fake.image_url() for _ in range(random.randint(1, 3))],
+            "seller_id": random.choice(self.seller_ids)
         }
         
         response = requests.post(f"{BASE_URL}/products/", json=product)
@@ -156,14 +158,16 @@ class ActivityGenerator:
                 "description": fake.text(),
                 "price": -100.00,
                 "category_id": "invalid_category_id",
-                "stock": -1
+                "stock": -1,
+                "seller_id": random.choice(self.seller_ids)
             },
             {
                 "name": "",
                 "description": fake.text(),
                 "price": 0,
                 "category_id": "invalid_category_id",
-                "stock": 0
+                "stock": 0,
+                "seller_id": random.choice(self.seller_ids)
             },
             # Некорректные категории
             {

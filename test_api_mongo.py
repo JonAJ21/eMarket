@@ -72,6 +72,9 @@ def test_categories():
 def test_products(category_id):
     print("\nTesting Products API...")
     
+    # Создаем первого продавца
+    seller_id = "test_seller_1"
+    
     # Создаем первый продукт
     product1_data = {
         "name": "iPhone 15 Pro",
@@ -79,7 +82,8 @@ def test_products(category_id):
         "price": 999.99,
         "category_id": category_id,
         "stock": 10,
-        "images": ["https://example.com/iphone15pro.jpg"]
+        "images": ["https://example.com/iphone15pro.jpg"],
+        "seller_id": seller_id
     }
     response = requests.post(f"{BASE_URL}/products/", json=product1_data)
     print("\nCreate first product:")
@@ -90,6 +94,9 @@ def test_products(category_id):
     
     product1_id = response.json()["_id"]
 
+    # Создаем второго продавца
+    seller_id_2 = "test_seller_2"
+    
     # Создаем второй продукт
     product2_data = {
         "name": "Samsung Galaxy S24",
@@ -97,7 +104,8 @@ def test_products(category_id):
         "price": 899.99,
         "category_id": category_id,
         "stock": 15,
-        "images": ["https://example.com/galaxys24.jpg"]
+        "images": ["https://example.com/galaxys24.jpg"],
+        "seller_id": seller_id_2
     }
     response = requests.post(f"{BASE_URL}/products/", json=product2_data)
     print("\nCreate second product:")
@@ -126,7 +134,8 @@ def test_products(category_id):
     # Обновляем первый продукт
     update_data = {
         "price": 899.99,
-        "stock": 5
+        "stock": 5,
+        "seller_id": seller_id
     }
     response = requests.put(f"{BASE_URL}/products/{product1_id}", json=update_data)
     print("\nUpdate first product:")
@@ -143,7 +152,8 @@ def test_products(category_id):
         "description": "This should fail",
         "price": 100.00,
         "category_id": "invalid_category_id",
-        "stock": 1
+        "stock": 1,
+        "seller_id": seller_id
     }
     response = requests.post(f"{BASE_URL}/products/", json=invalid_product_data)
     print("\nTry to create product with invalid category (should fail):")
