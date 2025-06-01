@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from bson import ObjectId
 from datetime import datetime
 from core.config import settings
+from metrics.decorators import cart_items_count
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -39,6 +40,8 @@ class BaseRepository(Generic[T]):
         item_dict = item.model_dump(by_alias=True)
         result = await self.collection.insert_one(item_dict)
         item_dict["_id"] = str(result.inserted_id)
+        if self.collection_name == "carts":
+            cart_items_count.labels(user_id=item.user_id).set(len(item.items))
         return self.model_class(**item_dict)
 
     async def get_by_id(self, item_id: str) -> Optional[T]:
@@ -60,6 +63,8 @@ class BaseRepository(Generic[T]):
             {"$set": item_dict}
         )
         if result.modified_count:
+            if self.collection_name == "carts":
+                cart_items_count.labels(user_id=item.user_id).set(len(item.items))
             return await self.get_by_id(item_id)
         return None
 
