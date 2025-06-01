@@ -167,11 +167,10 @@ def test_cart(product_id):
     
     # Добавляем товар в корзину
     add_data = {
-        "user_id": user_id,
         "product_id": product_id,
         "quantity": 2
     }
-    response = requests.post(f"{BASE_URL}/cart/add", json=add_data)
+    response = requests.post(f"{BASE_URL}/cart/{user_id}/items", json=add_data)
     print("\nAdd product to cart:")
     print_response(response)
     
@@ -182,20 +181,19 @@ def test_cart(product_id):
     
     # Изменяем количество товара в корзине
     update_data = {
-        "user_id": user_id,
-        "product_id": product_id,
         "quantity": 5
     }
-    response = requests.put(f"{BASE_URL}/cart/update", json=update_data)
+    response = requests.put(f"{BASE_URL}/cart/{user_id}/items/{product_id}", json=update_data)
     print("\nUpdate product quantity in cart:")
+    print_response(response)
+
+    # Получаем содержимое корзины после изменения количества
+    response = requests.get(f"{BASE_URL}/cart/{user_id}")
+    print("\nGet cart after quantity update:")
     print_response(response)
     
     # Удаляем товар из корзины
-    remove_data = {
-        "user_id": user_id,
-        "product_id": product_id
-    }
-    response = requests.delete(f"{BASE_URL}/cart/remove", json=remove_data)
+    response = requests.delete(f"{BASE_URL}/cart/{user_id}/items/{product_id}")
     print("\nRemove product from cart:")
     print_response(response)
     
@@ -205,8 +203,8 @@ def test_cart(product_id):
     print_response(response)
     
     # Добавляем товар снова и очищаем корзину
-    response = requests.post(f"{BASE_URL}/cart/add", json=add_data)
-    response = requests.post(f"{BASE_URL}/cart/clear", json={"user_id": user_id})
+    response = requests.post(f"{BASE_URL}/cart/{user_id}/items", json=add_data)
+    response = requests.delete(f"{BASE_URL}/cart/{user_id}")
     print("\nClear cart:")
     print_response(response)
     
@@ -246,8 +244,6 @@ def main():
         
         # Тестируем удаление категорий
         test_category_deletion(root_category_id, subcategory_id)
-        
-        print("\nAll tests completed successfully!")
         
     except requests.exceptions.ConnectionError:
         print("Error: Could not connect to the server. Make sure the server is running.")
