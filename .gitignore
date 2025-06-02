@@ -31,13 +31,17 @@ uv.lock
 # Clickhouse volume
 .clickhouse
 
+# Minio volume
+.minio
+
+
 # Clickhouse users config
 users.xml
 
 # Airflov volume
-.postgres_airflow
-.redis_airflow
+.postgres-airflow
 .postgres-db-volume
+
 
 
 
