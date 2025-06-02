@@ -30,46 +30,47 @@ class Settings(BaseSettings):
         alias="ECHO",
         json_schema_extra={"env": "ECHO"},
     )
+
     redis_host: str = Field(
         "redis_database",
         alias="REDIS_HOST",
         json_schema_extra={"env": "REDIS_HOST"},
     )
-    
+
     redis_port: int = Field(
         6379,
         alias="REDIS_PORT",
         json_schema_extra={"env": "REDIS_PORT"},
     )
-    
+
     redis_password: str = Field(
         "password",
         alias="REDIS_PASSWORD",
         json_schema_extra={"env": "REDIS_PASSWORD"},
     )
+
     authjwt_secret_key: str = Field(
         "secret",
         alias="AUTHJWT_SECRET_KEY",
         json_schema_extra={"env": "AUTHJWT_SECRET_KEY"},
     )
     authjwt_access_token_expires: int = Field(
-        900, 
-        alias="JWT_ACCESS_EXP_TIME", 
-        json_schema_extra={"env": "JWT_ACCESS_EXP_TIME"}
-    )  # 15 minutes
+        900,
+        alias="JWT_ACCESS_EXP_TIME",
+        json_schema_extra={"env": "JWT_ACCESS_EXP_TIME"},
+    )
     authjwt_refresh_token_expires: int = Field(
-        86400, 
-        alias="JWT_REFRESH_EXP_TIME", 
-        json_schema_extra={"env": "JWT_REFRESH_EXP_TIME"}
-    )  # 24 hours
-    
+        86400,
+        alias="JWT_REFRESH_EXP_TIME",
+        json_schema_extra={"env": "JWT_REFRESH_EXP_TIME"},
+    )
+
     authjwt_denylist_enabled: bool = False
     authjwt_denylist_token_checks: set = {"access", "refresh"}
     authjwt_token_location: set = {"cookies", "headers"}
     authjwt_cookie_csrf_protect: bool = False
-    authjwt_cookie_same_site: str = "lax" 
-    
-    
+    authjwt_cookie_same_site: str = "lax"
+
     super_user_login: str = Field(
         "superuser",
         alias="SUPER_USER_LOGIN",
@@ -80,14 +81,43 @@ class Settings(BaseSettings):
         alias="SUPER_USER_PASSWORD",
         json_schema_extra={"env": "SUPER_USER_PASSWORD"},
     )
-    
     super_user_email: EmailStr = Field(
         "superuser@example.com",
         alias="SUPER_USER_EMAIL",
         json_schema_extra={"env": "SUPER_USER_EMAIL"},
     )
-    
-    
+
+    KAFKA_BOOTSTRAP_SERVERS: str = Field(
+        ..., alias="KAFKA_BOOTSTRAP_SERVERS",
+        json_schema_extra={"env": "KAFKA_BOOTSTRAP_SERVERS"},
+    )
+    KAFKA_ORDERS_TOPIC: str = Field(
+        "dim_orders", alias="KAFKA_ORDERS_TOPIC",
+        json_schema_extra={"env": "KAFKA_ORDERS_TOPIC"},
+    )
+    KAFKA_SALES_TOPIC: str = Field(
+        "fact_sales", alias="KAFKA_SALES_TOPIC",
+        json_schema_extra={"env": "KAFKA_SALES_TOPIC"},
+    )
+
+    YOOKASSA_SHOP_ID: str = Field(
+        ..., alias="YOOKASSA_SHOP_ID",
+        json_schema_extra={"env": "YOOKASSA_SHOP_ID"},
+    )
+    YOOKASSA_SECRET_KEY: str = Field(
+        ..., alias="YOOKASSA_SECRET_KEY",
+        json_schema_extra={"env": "YOOKASSA_SECRET_KEY"},
+    )
+
+    mongo_uri: str = Field(
+        "mongodb://localhost:27017/market_db",
+        alias="MONGO_URI",
+        json_schema_extra={"env": "MONGO_URI"},
+    )
+
+    class Config:
+        env_file = ".env"
+
 settings = Settings()
 
 @AuthJWT.load_config

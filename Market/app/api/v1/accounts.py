@@ -1,6 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Header, Response, status
 from fastapi.responses import JSONResponse
+from prometheus_client import Counter
 
 from services.auth import BaseAuthService
 from schemas.auth import UserLoginDTO, UserLogout
@@ -16,6 +17,14 @@ router = APIRouter(
     tags=["Accounts"],
 )
 
+
+user_registration_counter = Counter(
+    'user_registration_total', 'Total number of user registrations')
+user_login_counter = Counter(
+    'user_login_total', 'Total number of user logins')
+user_logout_counter = Counter(
+    'user_logout_total', 'Total number of user logouts')
+
 @router.post(
     "/register",
     response_model=UserBase,
@@ -29,6 +38,7 @@ async def register(
 ) -> User:
     result: GenericResult[User] = await user_service.create_user(dto=user_dto)
     if result.is_success:
+        user_registration_counter.inc()
         return result.response
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.error.message)
 
@@ -52,7 +62,7 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="login or/and password incorrect"
         )
-
+    user_login_counter.inc()
     return token.response
 
 @router.post(
@@ -77,4 +87,5 @@ async def refresh(
 )
 async def logout(auth_service: BaseAuthService = Depends()):
     await auth_service.logout()
+    user_logout_counter.inc()
     return UserLogout(message="Logged out")

@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 from functools import wraps
 from time import time
 from typing import Any
+from enum import Enum
 
 from async_fastapi_jwt_auth import AuthJWT
 from async_fastapi_jwt_auth.exceptions import JWTDecodeError, MissingTokenError
@@ -92,45 +93,39 @@ class JWTAuthService(BaseAuthService):
                 status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message
             )
             
-    async def login(self, *, dto: UserLoginDTO) -> Token:
+    async def login(self, *, dto: UserLoginDTO) -> GenericResult[Token]:
         user: User = await self._user_service.get_user_by_login(login=dto.login)
         if not user or not user.check_password(dto.password):
-            raise RuntimeError("Wrong password or login")
+            return GenericResult.failure(Error(message="Wrong password or login", code="auth_failed"))
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent=dto.user_agent,
             user_device_type=UserDeviceType.web,
-            attempted_at=datetime.now(UTC),
+            attempted_at=datetime.now(),
             is_success=True
         )
-        
         await self._user_service.insert_user_login(dto=user_history)
-        
         tokens = await self._generate_token(user_id=user.id)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        
-        return tokens
+        return GenericResult.success(tokens)
     
-    async def login_by_oauth(self, *, login) -> Token:
+    async def login_by_oauth(self, *, login: str) -> GenericResult[Token]:
         user: User = await self._user_service.get_user_by_login(login=login)
         if not user:
-            raise RuntimeError("User not found")
+            return GenericResult.failure(Error(message="User not found", code="user_not_found"))
         user_history = UserHistoryCreateDTO(
             user_id=user.id,
             user_agent="oauth2",
             user_device_type=UserDeviceType.web,
-            attempted_at=datetime.now(UTC),
+            attempted_at=datetime.now(),
             is_success=True
         )
-        
         await self._user_service.insert_user_login(dto=user_history)
-        
         tokens = await self._generate_token(user_id=user.id)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        
-        return tokens
+        return GenericResult.success(tokens)
     
     async def logout(self) -> None:
         await self.require_auth()
@@ -140,7 +135,7 @@ class JWTAuthService(BaseAuthService):
         return await self._token_storage.store_token(token_jti=token_jti)
         
         
-    async def refresh(self) -> Token:
+    async def refresh(self) -> GenericResult[Token]:
         await self._refresh_token_required()
         refresh_jti = await self._get_jti()
         token_jti = TokenJTI(
@@ -152,7 +147,7 @@ class JWTAuthService(BaseAuthService):
         tokens = await self._generate_token(user_id=user_subject)
         await self._auth_jwt_service.set_access_cookies(tokens.access_token)
         await self._auth_jwt_service.set_refresh_cookies(tokens.refresh_token)
-        return tokens
+        return GenericResult.success(tokens)
         
         
     async def require_auth(self) -> None:
@@ -192,25 +187,24 @@ class JWTAuthService(BaseAuthService):
         user_id = decoded["sub"]
         return await self._user_service.get_user(user_id=user_id)
     
-def require_roles(roles: list[str]):
+def require_roles(roles: list[str | Enum]):
+    role_names = [r.value if isinstance(r, Enum) else r for r in roles]
     def auth_decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             auth_service = kwargs["auth_service"]
-            current_user: User = (await auth_service.get_user()).response
+            current_user: User = await auth_service.get_user()
             if not current_user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
                 )
             for role in current_user.roles:
-                if role.name in roles:
+                if role.name in role_names:
                     return await func(*args, **kwargs)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="User have not access"
             )
-
         return wrapper
-
     return auth_decorator 
         
     

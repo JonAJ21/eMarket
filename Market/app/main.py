@@ -3,18 +3,29 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from redis.asyncio.client import Redis
+
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import make_asgi_app
 from db.mongodb import MongoDB
+
+from prometheus_fastapi_instrumentator import Instrumentator
+from metrics import update_total_users
+from db.postgres import async_session
+
 from dependencies.main import setup_dependencies
 from db import redis
 from core.config import settings
 from api.v1.accounts import router as accounts_router
 from api.v1.users import router as users_router
+
 from api.v1 import products, categories, reviews, cart
 from metrics.middleware import PrometheusMiddleware
 from metrics.decorators import product_rating
 from services.review_service import ReviewService
+
+from api.v1.roles import router as roles_router
+from api.v1.sellers import router as sellers_router
+
 
 
 @asynccontextmanager
@@ -53,6 +64,8 @@ def create_app() -> FastAPI:
     
     app.include_router(accounts_router, prefix="/accounts")
     app.include_router(users_router, prefix="/users")
+    app.include_router(roles_router, prefix="/roles")
+    app.include_router(sellers_router, prefix="/markets")
     
     # Добавляем middleware для метрик
     app.add_middleware(PrometheusMiddleware)
@@ -73,6 +86,7 @@ def create_app() -> FastAPI:
     app.include_router(reviews.router, prefix="/api/v1/reviews", tags=["reviews"])
     app.include_router(cart.router, prefix="/api/v1/cart", tags=["cart"])
     
+
     setup_dependencies(app)
 
     # Добавляем эндпоинт для метрик Prometheus
@@ -87,5 +101,19 @@ def create_app() -> FastAPI:
     @app.get("/")
     async def root():
         return {"message": "Welcome to eMarket API"}
+
+
+    Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+
+    async def periodic_user_count_update():
+        while True:
+            async with async_session() as session:
+                await update_total_users(session)
+            await asyncio.sleep(30)
+
+    @app.on_event("startup")
+    async def start_metrics_updater():
+        asyncio.create_task(periodic_user_count_update())
+
     
     return app
