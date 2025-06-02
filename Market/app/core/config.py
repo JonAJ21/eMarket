@@ -70,8 +70,6 @@ class Settings(BaseSettings):
         json_schema_extra={"env": "SUPER_USER_EMAIL"},
     )
 
-    # 🟡 Новые поля из второго файла:
-
     KAFKA_BOOTSTRAP_SERVERS: str = Field(
         ..., alias="KAFKA_BOOTSTRAP_SERVERS",
         json_schema_extra={"env": "KAFKA_BOOTSTRAP_SERVERS"},
