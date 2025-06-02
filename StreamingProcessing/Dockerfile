@@ -15,4 +15,4 @@ COPY /app/ /app/
 
 WORKDIR /app
 
-CMD ["uvicorn", "--factory", "main:create_app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["python", "main.py"]

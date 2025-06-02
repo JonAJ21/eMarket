@@ -19,3 +19,37 @@ uv.lock
 # Redis volume
 .redis
 
+# Mongo volume
+.mongodb
+
+# Grafana volume
+.grafana
+
+# Prometheus volume
+.prometheus
+
+# Clickhouse volume
+.clickhouse
+
+# Minio volume
+.minio
+
+
+# Clickhouse users config
+users.xml
+
+# Airflov volume
+.postgres-airflow
+.postgres-db-volume
+
+
+
+
+
+# Data
+data/
+
+# Kubernetes envs
+environments/
+
+*secrets.yaml

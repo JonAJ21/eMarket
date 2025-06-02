@@ -1,0 +1,30 @@
+apiVersion: skaffold/v2beta25
+kind: Config
+metadata:
+  name: emarket
+build:
+  artifacts:
+    - image: emarket
+      context: ./Market
+      docker:
+        dockerfile: Dockerfile
+  local:
+    push: false
+    tryImportMissing: false
+deploy:
+  kubectl:
+    manifests:
+      - k8s/apps/Market/deployment.yaml
+      - k8s/apps/Market/service.yaml
+      - k8s/apps/Market/secrets.yaml
+      - k8s/apps/TestDataGeneration/deployment.yaml
+      - k8s/apps/TestDataGeneration/secrets.yaml
+      - k8s/apps/StreamingProcessing/deployment.yaml
+      - k8s/apps/StreamingProcessing/secrets.yaml
+
+ 
+portForward:
+  - resourceType: deployment
+    resourceName: emarket
+    port: 8000
+    localPort: 8000
