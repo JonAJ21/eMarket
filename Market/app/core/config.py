@@ -1,8 +1,25 @@
-from pydantic import EmailStr, Field, PostgresDsn
+from typing import List
+from pydantic import EmailStr, Field, PostgresDsn, AnyHttpUrl
 from pydantic_settings import BaseSettings
 from async_fastapi_jwt_auth import AuthJWT
 
 class Settings(BaseSettings):
+    # MongoDB settings
+    mongodb_url: str
+    mongodb_db_name: str
+    mongodb_username: str | None = None
+    mongodb_password: str | None = None
+
+    # Redis settings
+    redis_db: int = 0
+
+    # Server settings
+    debug: bool = False
+    api_v1_prefix: str
+    project_name: str
+    backend_cors_origins: List[AnyHttpUrl] = []
+
+    # PostgreSQL settings
     postgres_connection: PostgresDsn = Field(
         "postgresql+asyncpg://postgres:postgres@localhost:5432/postgres",
         alias="POSTGRES_CONNECTION",
