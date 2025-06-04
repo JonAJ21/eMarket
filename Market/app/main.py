@@ -26,14 +26,10 @@ from services.review_service import ReviewService
 from api.v1.roles import router as roles_router
 from api.v1.sellers import router as sellers_router
 
-
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # Инициализируем MongoDB перед всем остальным
     await MongoDB.connect_to_database()
     
-    # Инициализируем Redis
     redis.redis = Redis(
         host=settings.redis_host,
         port=settings.redis_port,
@@ -53,7 +49,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
-    # Настройка CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[str(origin) for origin in settings.backend_cors_origins],
@@ -67,20 +62,16 @@ def create_app() -> FastAPI:
     app.include_router(roles_router, prefix="/roles")
     app.include_router(sellers_router, prefix="/markets")
     
-    # Добавляем middleware для метрик
     app.add_middleware(PrometheusMiddleware)
     
-    # Инициализация метрик рейтинга товаров
     async def init_product_ratings():
         review_service = ReviewService()
-        # Получаем все продукты
         products = await review_service.product_repo.get_all()
-        # Для каждого продукта получаем и устанавливаем рейтинг
         for product in products:
             rating = await review_service.get_product_rating(str(product.id))
             product_rating.labels(product_id=str(product.id)).set(rating)
     
-    # Подключение роутеров
+ 
     app.include_router(products.router, prefix="/api/v1/products", tags=["products"])
     app.include_router(categories.router, prefix="/api/v1/categories", tags=["categories"])
     app.include_router(reviews.router, prefix="/api/v1/reviews", tags=["reviews"])
@@ -113,6 +104,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def start_metrics_updater():
+
         asyncio.create_task(periodic_user_count_update())
 
     
