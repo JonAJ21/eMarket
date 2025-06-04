@@ -11,35 +11,49 @@ from schemas.result import GenericResult
 from services.user_role import BaseUserRoleService
 from dependencies.services.user_service_factory import get_user_service
 
-
 from pydantic import BaseModel
 
 class UserDetail(BaseModel):
     id: UUID
     login: str
-    first_name: Optional[str]
-    last_name: Optional[str]
-    fathers_name: Optional[str]
-    phone: Optional[str]
-    email: Optional[str]
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    fathers_name: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    is_active: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 class UserHistoryResponse(BaseModel):
     user_id: UUID
     attempted_at: datetime
-    user_agent: Optional[str]
-    user_device_type: Optional[str]
+    user_agent: Optional[str] = None
+    user_device_type: Optional[str] = None
     is_success: bool
 
 class SuccessMessage(BaseModel):
     message: str = "Success"
 
-
-
 router = APIRouter(
     tags=['Users'],    
 )
+
+@router.get("/profile", response_model=UserResponse, tags=["Users"], summary="Get active user profile", description="Get information about the active user")
+async def get_profile(
+    auth_service: BaseAuthService = Depends(),
+    user_service: BaseUserService = Depends(),
+):
+    user = await auth_service.get_user()
+    return UserResponse(
+        id=user.id,
+        email=user.email or "changemail@example.com",
+        full_name=f"{user.first_name or ''} {user.last_name or ''}".strip(),
+        is_active=user.is_active,
+        role_id=user.roles[0].id if user.roles and len(user.roles) > 0 else None,  
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
 
 @router.get("/profile/history", response_model=List[UserHistoryResponse], tags=["Users"], summary="Get active user history", description="Get history of the active user")
 async def get_profile_history(
@@ -59,22 +73,6 @@ async def get_profile_history(
             is_success=getattr(h, "is_success", None)
         ) for h in history
     ]
-
-@router.get("/profile", response_model=UserResponse, tags=["Users"], summary="Get active user profile", description="Get information about the active user")
-async def get_profile(
-    auth_service: BaseAuthService = Depends(),
-    user_service: BaseUserService = Depends(),
-):
-    user = await auth_service.get_user()
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        full_name=f"{user.first_name or ''} {user.last_name or ''}".strip(),
-        is_active=user.is_active,
-        role_id=user.roles[0].id if user.roles else None,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
 
 @router.get(
     "/",
