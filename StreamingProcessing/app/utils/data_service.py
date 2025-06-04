@@ -1,7 +1,9 @@
+import logging
 from typing import Any, Dict, List
 from utils.scheamas import DimOrderRecord, FactSalesRecord, PaymentOrderEvent
 from utils.clickhouse_client import ClickHouseClient
 
+logger = logging.getLogger(__name__)
 
 class DataService:
     def __init__(self, clickhouse_client: ClickHouseClient):
@@ -16,10 +18,10 @@ class DataService:
                 await ch.insert_fact_sales(transformed["fact_sales"])
                 await ch.insert_dim_orders(transformed["dim_orders"])
             
-            print(f"Processed event {event.id}")
+            logger.info(f"Processed event {event.id}")
             return True
         except Exception as e:
-            print(f"Error processing event: {e}")
+            logger.error(f"Error processing event: {e}", exc_info=True)
             return False
         
     async def transform(self, event: PaymentOrderEvent) -> Dict[str, List]:
