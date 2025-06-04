@@ -1,8 +1,8 @@
 from typing import Any, Callable
 from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
-from app.core.config import settings
-from app.services.order_service import OrderService
+from core.config import settings
+from services.order_service import OrderService
 import dependencies.services.auth_service_factory
 import dependencies.services.role_service_factory
 import dependencies.services.user_service_factory

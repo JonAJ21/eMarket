@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from bson import ObjectId
 from uuid import UUID
 
@@ -16,8 +16,10 @@ class PyObjectId(ObjectId):
         return ObjectId(v)
 
     @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+    def __get_pydantic_json_schema__(cls, core_schema, handler):
+        json_schema = handler(core_schema)
+        json_schema.update(type="string")
+        return json_schema
 
 class CartItem(BaseModel):
     product_id: UUID
@@ -26,15 +28,16 @@ class CartItem(BaseModel):
 
 class BaseSchema(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
-    class Config:
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             ObjectId: str,
             PyObjectId: str,
             datetime: lambda dt: dt.isoformat()
-        }
-        populate_by_name = True
-        arbitrary_types_allowed = True
-        allow_population_by_field_name = True
+        },
+        populate_by_name=True,
+        arbitrary_types_allowed=True,
+        allow_population_by_field_name=True
+    )

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, conint, ConfigDict
 from datetime import datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 class CartItemBase(BaseModel):
     product_id: str
@@ -43,3 +43,8 @@ class CartInDB(CartBase):
 
 class CartResponse(CartInDB):
     pass
+
+class Cart(BaseModel):
+  product_id: UUID
+  seller_id: UUID
+  totalamount: float

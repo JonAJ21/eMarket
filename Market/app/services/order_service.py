@@ -4,14 +4,14 @@ from uuid import UUID, uuid4
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi import HTTPException
 
-from app.models.order import OrderModel
-from app.schemas.payment import (
+from models.order import OrderModel
+from schemas.payment import (
     Order, OrderCreate, OrderUpdate, OrderStatus,
     PaymentOrderEvent, DeliveryMethod, DeliveryAddress
 )
-from app.services.payment_service import payment_service
-from app.services.kafka_service import kafka_service
-from app.schemas.cart import Cart
+from services.payment_service import payment_service
+from services.kafka_service import kafka_service
+from schemas.cart import Cart
 
 
 class OrderService:
@@ -72,12 +72,7 @@ class OrderService:
                     delivery_method=order.delivery_method
                 )
 
-                sales_events = event.to_sales_events()
-                for sales_event in sales_events:
-                    await kafka_service.send_sales_event(sales_event.model_dump())
-
-                order_event = event.to_order_event()
-                await kafka_service.send_order_event(order_event.model_dump())
+                await kafka_service.send_order_event(event.model_dump())
 
                 return order
 

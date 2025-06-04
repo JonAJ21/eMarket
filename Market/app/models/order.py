@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
-from app.schemas.payment import Order, OrderCreate, OrderUpdate, OrderStatus
+from schemas.payment import Order, OrderCreate, OrderUpdate, OrderStatus
 
 class OrderModel:
     def __init__(self, db: AsyncIOMotorDatabase):

@@ -4,7 +4,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from pydantic import Field, BaseModel
 
-from .base import BaseSchema, CartItem
+from schemas.base import BaseSchema, CartItem
 
 class OrderStatus(str, Enum):
     PENDING = "pending"

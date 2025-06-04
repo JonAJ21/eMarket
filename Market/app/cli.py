@@ -1,7 +1,6 @@
 import asyncio
 from functools import wraps
 from typer import Typer
-import uvicorn
 from db.postgres import async_session
 from models.user import User
 from models.role import Role

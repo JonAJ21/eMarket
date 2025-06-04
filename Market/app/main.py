@@ -9,7 +9,7 @@ from prometheus_client import make_asgi_app
 from db.mongodb import MongoDB
 
 from prometheus_fastapi_instrumentator import Instrumentator
-from metrics import update_total_users
+from metrics.update_total_users import update_total_users
 from db.postgres import async_session
 
 from dependencies.main import setup_dependencies

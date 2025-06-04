@@ -41,7 +41,6 @@ x-airflow-common:
     postgres:
       condition: service_healthy
 
-
 services:
   market:
     container_name: market
@@ -55,15 +54,14 @@ services:
       - "${MARKET_PORT}:8000"
     env_file:
       - ".env"
-    restart:
-      always
+    restart: always
     depends_on:
       - postgres_database
       - redis_database
-
       - mongodb_database
+    networks:
+      - backend
 
-  
   postgres_database:
     container_name: postgres_database
     image: postgres:17.2
@@ -76,7 +74,9 @@ services:
     volumes:
       - .postgres:/var/lib/postgresql/data
     restart: always
-    
+    networks:
+      - backend
+
   redis_database:
     image: redis:alpine3.21
     container_name: redis_database
@@ -86,27 +86,26 @@ services:
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
-       - .redis:/data
+      - .redis:/data
     restart: always
+    networks:
+      - backend
 
   mongodb_database:
     container_name: mongodb_database
     image: mongo:latest
     environment:
       MONGODB_DB_NAME: ${MONGODB_DB_NAME}
-
       MONGODB_USERNAME: ${MONGODB_USERNAME}
       MONGODB_PASSWORD: ${MONGODB_PASSWORD}
-
     ports:
       - "${MONGODB_PORT}:27017"
     volumes:
       - .mongodb:/data/db
     restart: always
-
     networks:
       - backend
-  
+
   prometheus:
     container_name: prometheus
     image: prom/prometheus:latest
@@ -141,8 +140,6 @@ services:
     restart: always
     depends_on:
       - prometheus
-    volumes:
-      - ./grafana-data:/var/lib/grafana
 
   node_exporter:
     image: prom/node-exporter:latest
@@ -166,12 +163,6 @@ services:
     depends_on:
       - market
 
-
-networks: 
-  backend:
-    driver: bridge
-
-
   clickhouse_database:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
@@ -183,7 +174,8 @@ networks:
       - ./Clickhouse/users.xml:/etc/clickhouse-server/users.xml
       - .clickhouse:/var/lib/clickhouse
       - ./Clickhouse/ddl.sql:/docker-entrypoint-initdb.d/init.sql
-
+    networks:
+      - backend
 
   zookeeper:
     container_name: zookeeper
@@ -193,7 +185,8 @@ networks:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
-
+    networks:
+      - backend
 
   kafka:
     container_name: kafka
@@ -209,9 +202,10 @@ networks:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    healthcheck: 
-      test: nc -z localhost 29092  
-
+    healthcheck:
+      test: nc -z localhost 29092
+    networks:
+      - backend
 
   kafka-ui:
     container_name: kafka-ui
@@ -223,7 +217,8 @@ networks:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
-
+    networks:
+      - backend
 
   test_data_generator:
     container_name: test_data_generator
@@ -239,6 +234,8 @@ networks:
       - mongodb_database
       - zookeeper
       - kafka
+    networks:
+      - backend
 
   streaming_processing:
     container_name: streaming_processing
@@ -254,7 +251,9 @@ networks:
       - zookeeper
       - kafka
       - clickhouse_database
-    
+    networks:
+      - backend
+
   minio:
     image: minio/minio
     container_name: minio
@@ -272,8 +271,9 @@ networks:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - backend
 
-  
   # Airflow
   postgres:
     image: postgres:13
@@ -289,10 +289,10 @@ networks:
       retries: 5
       start_period: 5s
     restart: always
+    networks:
+      - backend
 
   redis:
-    # Redis is limited to 7.2-bookworm due to licencing change
-    # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
     image: redis:7.2-bookworm
     expose:
       - 6379
@@ -303,6 +303,8 @@ networks:
       retries: 50
       start_period: 30s
     restart: always
+    networks:
+      - backend
 
   airflow-apiserver:
     <<: *airflow-common
@@ -320,6 +322,8 @@ networks:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
   airflow-scheduler:
     <<: *airflow-common
@@ -335,6 +339,8 @@ networks:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
   airflow-dag-processor:
     <<: *airflow-common
@@ -350,12 +356,13 @@ networks:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
   airflow-worker:
     <<: *airflow-common
     command: celery worker
     healthcheck:
-      # yamllint disable rule:line-length
       test:
         - "CMD-SHELL"
         - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
@@ -365,8 +372,6 @@ networks:
       start_period: 30s
     environment:
       <<: *airflow-common-env
-      # Required to handle warm shutdown of the celery workers properly
-      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
       DUMB_INIT_SETSID: "0"
     restart: always
     depends_on:
@@ -375,6 +380,8 @@ networks:
         condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
   airflow-triggerer:
     <<: *airflow-common
@@ -390,11 +397,12 @@ networks:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
   airflow-init:
     <<: *airflow-common
     entrypoint: /bin/bash
-    # yamllint disable rule:line-length
     command:
       - -c
       - |
@@ -472,8 +480,6 @@ networks:
         echo "Files in shared volumes:"
         echo
         ls -la /opt/airflow/{logs,dags,plugins,config}
-
-    # yamllint enable rule:line-length
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
@@ -482,6 +488,8 @@ networks:
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
+    networks:
+      - backend
 
   airflow-cli:
     <<: *airflow-common
@@ -490,17 +498,15 @@ networks:
     environment:
       <<: *airflow-common-env
       CONNECTION_CHECK_MAX_COUNT: "0"
-    # Workaround for entrypoint issue. See: https://github.com/apache/airflow/issues/16252
     command:
       - bash
       - -c
       - airflow
     depends_on:
       <<: *airflow-common-depends-on
+    networks:
+      - backend
 
-  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
-  # or by explicitly targeted on the command line e.g. docker-compose up flower.
-  # See: https://docs.docker.com/compose/profiles/
   flower:
     <<: *airflow-common
     command: celery flower
@@ -519,19 +525,14 @@ networks:
       <<: *airflow-common-depends-on
       airflow-init:
         condition: service_completed_successfully
+    networks:
+      - backend
 
-
-# networks: 
-#   backend:
-#     driver: bridge
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   .postgres-airflow:
-
-
-
-
-volumes:
   prometheus_data:
   grafana_data:
-

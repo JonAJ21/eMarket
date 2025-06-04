@@ -5,18 +5,57 @@ from async_fastapi_jwt_auth import AuthJWT
 
 class Settings(BaseSettings):
     # MongoDB settings
-    mongodb_url: str
-    mongodb_db_name: str
-    mongodb_username: str | None = None
-    mongodb_password: str | None = None
+    mongodb_url: str = Field(
+        "",
+        alias="MONGODB_URL",
+        json_schema_extra={"env": "MONGODB_URL"}
+    )
+    mongodb_db_name: str = Field(
+        "",
+        alias="MONGODB_DB_NAME",
+        json_schema_extra={"env": "MONGODB_DB_NAME"}
+    )
+    mongodb_username: str | None = Field(
+        "",
+        alias="MONGODB_USERNAME",
+        json_schema_extra={"env": "PMONGODB_USERNAME"}
+    )
+    mongodb_password: str | None = Field(
+        "",
+        alias="MONGODB_PASSWORD",
+        json_schema_extra={"env": "MONGODB_PASSWORD"}
+    )
 
     # Redis settings
     redis_db: int = 0
+    redis_host: str = Field(
+        "redis_database",
+        alias="REDIS_HOST",
+        json_schema_extra={"env": "REDIS_HOST"},
+    )
+    redis_port: int = Field(
+        6379,
+        alias="REDIS_PORT",
+        json_schema_extra={"env": "REDIS_PORT"},
+    )
+    redis_password: str = Field(
+        "password",
+        alias="REDIS_PASSWORD",
+        json_schema_extra={"env": "REDIS_PASSWORD"},
+    )
 
     # Server settings
     debug: bool = False
-    api_v1_prefix: str
-    project_name: str
+    api_v1_prefix: str = Field(
+        "/api/v1",
+        alias="API_V1_PREFIX",
+        json_schema_extra={"env": "API_V1_PREFIX"},
+    )
+    project_name: str = Field(
+        "Market",
+        alias="PROJECT_NAME",
+        json_schema_extra={"env": "PROJECT_NAME"},
+    )
     backend_cors_origins: List[AnyHttpUrl] = []
 
     # PostgreSQL settings
@@ -29,24 +68,6 @@ class Settings(BaseSettings):
         False,
         alias="ECHO",
         json_schema_extra={"env": "ECHO"},
-    )
-
-    redis_host: str = Field(
-        "redis_database",
-        alias="REDIS_HOST",
-        json_schema_extra={"env": "REDIS_HOST"},
-    )
-
-    redis_port: int = Field(
-        6379,
-        alias="REDIS_PORT",
-        json_schema_extra={"env": "REDIS_PORT"},
-    )
-
-    redis_password: str = Field(
-        "password",
-        alias="REDIS_PASSWORD",
-        json_schema_extra={"env": "REDIS_PASSWORD"},
     )
 
     authjwt_secret_key: str = Field(
@@ -88,7 +109,7 @@ class Settings(BaseSettings):
     )
 
     KAFKA_BOOTSTRAP_SERVERS: str = Field(
-        ..., alias="KAFKA_BOOTSTRAP_SERVERS",
+        "kafka:29092", alias="KAFKA_BOOTSTRAP_SERVERS",
         json_schema_extra={"env": "KAFKA_BOOTSTRAP_SERVERS"},
     )
     KAFKA_ORDERS_TOPIC: str = Field(
@@ -101,22 +122,21 @@ class Settings(BaseSettings):
     )
 
     YOOKASSA_SHOP_ID: str = Field(
-        ..., alias="YOOKASSA_SHOP_ID",
+        "", 
+        alias="YOOKASSA_SHOP_ID",
         json_schema_extra={"env": "YOOKASSA_SHOP_ID"},
     )
     YOOKASSA_SECRET_KEY: str = Field(
-        ..., alias="YOOKASSA_SECRET_KEY",
+        "", 
+        alias="YOOKASSA_SECRET_KEY",
         json_schema_extra={"env": "YOOKASSA_SECRET_KEY"},
     )
 
     mongo_uri: str = Field(
         "mongodb://localhost:27017/market_db",
-        alias="MONGO_URI",
-        json_schema_extra={"env": "MONGO_URI"},
+        alias="MONGODB_URI",
+        json_schema_extra={"env": "MONGODB_URL"},
     )
-
-    class Config:
-        env_file = ".env"
 
 settings = Settings()
 
