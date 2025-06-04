@@ -8,4 +8,5 @@ total_users_gauge = Gauge('total_users', 'Current total number of users')
 async def update_total_users(session: AsyncSession):
     result = await session.execute(select(func.count()).select_from(User))
     count = result.scalar()
+    print(f"[metrics] total_users = {count}")
     total_users_gauge.set(count) 

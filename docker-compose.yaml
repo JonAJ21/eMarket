@@ -74,6 +74,28 @@ services:
     volumes:
       - ./grafana-data:/var/lib/grafana
 
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - backend
+    restart: always
+
+  locust:
+    image: locustio/locust
+    container_name: locust
+    volumes:
+      - ./Market/app/tests:/mnt/locust
+    command: -f /mnt/locust/test_locust.py --host http://market:8000
+    ports:
+      - "8089:8089"
+    networks:
+      - backend
+    depends_on:
+      - market
+
 networks: 
   backend:
     driver: bridge

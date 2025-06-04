@@ -76,17 +76,6 @@ async def get_profile(
         updated_at=user.updated_at,
     )
 
-@router.get("/me", response_model=UserResponse, summary="Get your profile")
-async def get_own_profile(
-    auth_service: BaseAuthService = Depends(),
-    user_service: BaseUserService = Depends(get_user_service),
-):
-    user = await auth_service.get_user()
-    result = await user_service.get_user_by_id(user.id)
-    if not result:
-        raise HTTPException(status_code=404, detail="User not found")
-    return result
-
 @router.get(
     "/",
     description="Retrieve information about all users in the system",
@@ -251,37 +240,6 @@ async def list_users(
     auth_service: BaseAuthService = Depends(),
 ):
     return await user_service.list_users(skip=skip, limit=limit)
-
-@router.put("/{user_id}", response_model=UserResponse, summary="Update user by ID")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
-async def update_user_by_id(
-    user_id: UUID = Path(...),
-    dto: UserUpdateDTO = Body(...),
-    user_service: BaseUserService = Depends(get_user_service),
-    auth_service: BaseAuthService = Depends(),
-):
-    return await user_service.update_user(user_id, dto)
-
-@router.delete("/{user_id}", summary="Delete user by ID")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
-async def delete_user_by_id(
-    user_id: UUID = Path(...),
-    user_service: BaseUserService = Depends(get_user_service),
-    auth_service: BaseAuthService = Depends(),
-):
-    await user_service.delete_user(user_id)
-    return {"message": "Success"}
-
-@router.put("/{user_id}/assign-role", summary="Assign role to user")
-@require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
-async def assign_role(
-    user_id: UUID = Path(...),
-    role_id: UUID = Body(..., embed=True),
-    user_service: BaseUserService = Depends(get_user_service),
-    auth_service: BaseAuthService = Depends(),
-):
-    await user_service.assign_role(user_id, role_id)
-    return {"message": "Success"}
 
 @router.get("/{user_id}/history", response_model=List[UserHistoryResponse], summary="Get user history")
 async def get_user_history(

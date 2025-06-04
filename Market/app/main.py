@@ -15,7 +15,6 @@ from api.v1.users import router as users_router
 from api.v1.roles import router as roles_router
 from api.v1.sellers import router as sellers_router
 
-
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     redis.redis = Redis(
@@ -36,10 +35,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
-    app.include_router(accounts_router, prefix="/accounts")
-    app.include_router(users_router, prefix="/users")
-    app.include_router(roles_router, prefix="/roles")
-    app.include_router(sellers_router, prefix="/markets")
+    app.include_router(accounts_router, prefix="/api/v1/accounts")
+    app.include_router(users_router, prefix="/api/v1/users")
+    app.include_router(roles_router, prefix="/api/v1/roles")
+    app.include_router(sellers_router, prefix="/api/v1/markets")
     
     
     
@@ -56,6 +55,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def start_metrics_updater():
+
         asyncio.create_task(periodic_user_count_update())
     
     return app
