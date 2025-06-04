@@ -42,8 +42,9 @@ users.xml
 .postgres-airflow
 .postgres-db-volume
 
-
-
+#Airflow
+config/
+plugins
 
 
 # Data
@@ -53,3 +54,5 @@ data/
 environments/
 
 *secrets.yaml
+
+logs/

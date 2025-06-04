@@ -1,9 +1,16 @@
 import asyncio
+import logging
 from utils.data_service import DataService
 from utils.clickhouse_client import ClickHouseClient
 from utils.consumer import KafkaConsumer
 from utils.config import settings
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 class App:
     def __init__(self):
@@ -22,20 +29,23 @@ class App:
         }
     
     async def run(self):
-        while(True):
+        while True:
             try:
+                logger.info("Starting application...")
                 kafka_consumer = KafkaConsumer(**self.kafka_config)
                 clickhouse_client = ClickHouseClient(**self.clickhouse_config)
                 data_service = DataService(clickhouse_client)
                 
                 await kafka_consumer.start()
+                logger.info("Kafka consumer started successfully")
                 
                 async for message in kafka_consumer.consume_messages():
                     await data_service.process_event(message) 
             except Exception as e:
+                logger.error(f"Application error: {e}", exc_info=True)
                 await asyncio.sleep(1)
-                print(f"Application error: {e}")
             finally:
+                logger.info("Stopping Kafka consumer")
                 await kafka_consumer.stop()
                 
 if __name__ == "__main__":
