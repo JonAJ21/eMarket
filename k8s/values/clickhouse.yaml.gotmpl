@@ -1,0 +1,22 @@
+cluster:
+  layout:
+    shardsCount: 3
+    replicasCount: 3
+  zookeeper:
+    nodes:
+      - host: zookeeper-0.zookeeper-headless.clickhouse.svc.cluster.local
+        port: 2181
+    session_timeout_ms: 30000
+    operation_timeout_ms: 10000
+    root: /clickhouse
+
+persistence:
+  enabled: true
+  size: 3Gi
+
+service:
+  type: LoadBalancer
+
+auth:
+  username: {{ .Environment.Values.clickhouseUserName }}
+  password: {{ .Environment.Values.clickhousePassword }}

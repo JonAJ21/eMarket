@@ -1,0 +1,58 @@
+# Python generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+
+# Environment
+.venv/
+uv.lock
+.env
+.venv
+
+# Postgres volume
+.postgres
+
+# Redis volume
+.redis
+
+# Mongo volume
+.mongodb
+
+# Grafana volume
+.grafana
+
+# Prometheus volume
+.prometheus
+
+# Clickhouse volume
+.clickhouse
+
+# Minio volume
+.minio
+
+
+# Clickhouse users config
+users.xml
+
+# Airflov volume
+.postgres-airflow
+.postgres-db-volume
+
+#Airflow
+config/
+plugins/
+logs/
+
+# Data
+data/
+
+# Kubernetes envs
+environments/
+
+*secrets.yaml
+
+

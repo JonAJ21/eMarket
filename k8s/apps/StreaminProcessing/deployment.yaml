@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamingprocessing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: streamingprocessing
+  template:
+    metadata:
+      labels:
+        app: streamingprocessing
+    spec:
+      containers:
+        - name: streamingprocessing
+          image: streamingprocessing  
+          envFrom:
+            - secretRef:
+                name: streamingprocessing-secrets

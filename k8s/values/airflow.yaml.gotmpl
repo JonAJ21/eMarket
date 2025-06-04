@@ -1,0 +1,16 @@
+executor: "CeleryExecutor"
+
+redis:
+  enabled: true
+flower:
+  enabled: true
+postgresql:
+  enabled: true
+
+dags:
+  gitSync:
+    enabled: true              
+    repo: {{ .Environment.Values.dagsURL }}
+    branch: "main"              
+    subPath: {{ .Environment.Values.dagsSubPath }}           
+    wait: 60                   
