@@ -44,8 +44,8 @@ users.xml
 
 #Airflow
 config/
-plugins
-
+plugins/
+logs/
 
 # Data
 data/
@@ -55,4 +55,4 @@ environments/
 
 *secrets.yaml
 
-logs/
+

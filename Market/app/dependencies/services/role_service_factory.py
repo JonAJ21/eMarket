@@ -24,6 +24,6 @@ def create_role_service(
         session=session,
         cache_service=cache_service
     )
-    unit_of_work = SQLAlchemyUnitOfWork(_session=session)
+    unit_of_work = SQLAlchemyUnitOfWork(session=session)
     return RoleService(repository=cached_repository, uow=unit_of_work)
     
