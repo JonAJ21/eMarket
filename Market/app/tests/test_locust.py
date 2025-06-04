@@ -135,11 +135,11 @@ class WebsiteUser(HttpUser):
             headers = {"Authorization": f"Bearer {self.token}"}
             self.client.get("/api/v1/markets/", headers=headers)
 
-    @task(2)
-    def get_own_market(self):
-        if getattr(self, 'token', None) and getattr(self, 'market_id', None):
-            headers = {"Authorization": f"Bearer {self.token}"}
-            self.client.get("/api/v1/markets/profile", headers=headers)
+    # @task(2)
+    # def get_own_market(self):
+    #     if getattr(self, 'token', None) and getattr(self, 'market_id', None):
+    #         headers = {"Authorization": f"Bearer {self.token}"}
+    #         self.client.get("/api/v1/markets/profile", headers=headers)
 
     @task(1)
     def update_market(self):
