@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testdatageneration
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: testdatageneration
+  template:
+    metadata:
+      labels:
+        app: testdatageneration
+    spec:
+      containers:
+        - name: testdatageneration
+          image: testdatageneration
+          envFrom:
+            - secretRef:
+                name: testdatageneration-secrets 

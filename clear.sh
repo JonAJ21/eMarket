@@ -8,5 +8,11 @@ find "$SCRIPT_DIR" -type d -name ".pytest_cache" -exec rm -rf {} +
 
 rm -r .postgres
 rm -r .redis
+rm -r .grafana
+rm -r .prometheus
+rm -r .clickhouse
+rm -r .mongodb
+rm -r .postgres-airflow
+rm -r .minio
 
 echo "Cleared"

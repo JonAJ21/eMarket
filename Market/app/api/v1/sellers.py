@@ -9,7 +9,7 @@ from dependencies.services.seller_service_factory import get_seller_service
 from services.seller import BaseSellerService
 from prometheus_client import Counter
 
-# Prometheus counters for market actions
+
 market_create_counter = Counter('market_create_total', 'Total number of markets created')
 market_update_counter = Counter('market_update_total', 'Total number of markets updated')
 market_delete_counter = Counter('market_delete_total', 'Total number of markets deleted')
@@ -38,7 +38,7 @@ class SuccessMessage(BaseModel):
 
 router = APIRouter(tags=["Markets"])
 
-# 1. Create a store (not verified)
+
 @router.post("/", response_model=SellerInfoResponse, summary="Create a store", description="Create a store (not verified)")
 async def create_store(
     dto: SellerCreateDTO = Body(...),
@@ -53,7 +53,6 @@ async def create_store(
     market_create_counter.inc()
     return SellerInfoResponse.from_orm(seller)
 
-# 2. Update information about the store (your own)
 @router.put("/", response_model=SellerInfoResponse, summary="Update your store", description="Update information about the store (your own)")
 async def update_store(
     dto: SellerCreateDTO = Body(...),
@@ -65,7 +64,7 @@ async def update_store(
     market_update_counter.inc()
     return SellerInfoResponse.from_orm(seller)
 
-# 3. Delete the store (your own)
+
 @router.delete("/", response_model=SuccessMessage, summary="Delete your store", description="Delete the store (your own)")
 async def delete_store(
     auth_service: BaseAuthService = Depends(),
@@ -76,7 +75,7 @@ async def delete_store(
     market_delete_counter.inc()
     return SuccessMessage()
 
-# 7. Get information about the limit of unconfirmed stores starting with skip
+
 @router.get("/unverified", response_model=List[SellerInfoResponse], summary="List unverified stores", description="Get information about the limit of unconfirmed stores starting with skip")
 @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def list_unverified_stores(
@@ -89,7 +88,7 @@ async def list_unverified_stores(
     market_list_counter.inc()
     return [SellerInfoResponse.from_orm(s) for s in sellers]
 
-# 4. View information about the store (your own)
+
 @router.get("/profile", response_model=SellerInfoResponse, summary="View your store", description="View information about the store (your own)")
 async def get_own_store(
     auth_service: BaseAuthService = Depends(),
@@ -101,7 +100,7 @@ async def get_own_store(
         raise HTTPException(status_code=404, detail="Store not found")
     return SellerInfoResponse.from_orm(seller)
 
-# 6. Get information about the store's market_id
+
 @router.get("/{market_id}", response_model=SellerInfoResponse, summary="Get store by ID", description="Get information about the store's market_id")
 async def get_store_by_id(
     market_id: UUID = Path(...),
@@ -112,7 +111,7 @@ async def get_store_by_id(
         raise HTTPException(status_code=404, detail="Store not found")
     return SellerInfoResponse.from_orm(seller)
 
-# 5. Get information about the limit of stores confirmed by the administration, starting with skip
+
 @router.get("/", response_model=List[SellerInfoResponse], summary="List verified stores", description="Get information about the limit of stores confirmed by the administration, starting with skip")
 async def list_verified_stores(
     skip: int = Query(0, ge=0),
@@ -123,7 +122,7 @@ async def list_verified_stores(
     market_list_counter.inc()
     return [SellerInfoResponse.from_orm(s) for s in sellers]
 
-# 8. Verify the store
+
 @router.put("/{market_id}/verify", response_model=SuccessMessage, summary="Verify a store", description="Verify the store")
 @require_roles([Roles.ADMIN, Roles.SUPER_ADMIN])
 async def verify_store(

@@ -1,0 +1,20 @@
+architecture: replication
+auth:
+  password: {{ .Environment.Values.redisPassword }}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  service:
+    type: NodePort
+    nodePorts:
+      redis: {{ .Environment.Values.redisNodePort }}
+
+replica:
+  replicaCount: {{ .Environment.Values.redisReplicaCount }}
+  persistence:
+    enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
